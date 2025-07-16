@@ -4,6 +4,7 @@ let img = new Image();
 let scaleX = 1;
 let scaleY = 1;
 let rotation = 0;
+let brightness = 0;
 
 document.getElementById('fileInput').addEventListener('change', event => {
   const file = event.target.files[0];
@@ -31,6 +32,18 @@ function draw() {
   ctx.rotate(rotation * Math.PI / 180);
   ctx.drawImage(img, -img.width / 2, -img.height / 2);
   ctx.restore();
+
+  if (brightness !== 0) {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const adj = (brightness / 100) * 255;
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = Math.min(255, Math.max(0, data[i] + adj));
+      data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + adj));
+      data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + adj));
+    }
+    ctx.putImageData(imageData, 0, 0);
+  }
 }
 
 function rotate(deg) {
@@ -72,4 +85,9 @@ function saveBlob(blob, filename) {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(link.href);
+}
+
+function setBrightness(value) {
+  brightness = parseInt(value, 10) || 0;
+  draw();
 }

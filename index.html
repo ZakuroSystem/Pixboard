@@ -21,6 +21,9 @@
     Height: <input type="number" id="height" value="0">
     <button onclick="resizeCanvas()">Resize</button>
   </div>
+  <div>
+    Brightness: <input type="range" id="brightness" min="-100" max="100" value="0" oninput="setBrightness(this.value)">
+  </div>
   <canvas id="canvas"></canvas>
   <div>
     <button onclick="savePNG()">Save PNG</button>
