@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+  <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Pixboard</title>
@@ -15,68 +15,82 @@
 </head>
 <body class="bg-gray-50 text-gray-800">
   <div class="mx-auto p-4 space-y-4 max-w-none">
-    <h1 class="text-2xl font-bold">Pixboard</h1>
+    <div class="flex items-center gap-2">
+      <h1 class="text-2xl font-bold" data-i18n="title">Pixboard</h1>
+      <select id="langSelect" class="border p-1">
+        <option value="en">English</option>
+        <option value="ja">日本語</option>
+      </select>
+    </div>
     <input type="file" id="fileInput" accept="image/*" multiple class="block mb-2">
 
     <div class="flex flex-wrap gap-2">
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="rotate(-90)">Rotate -90°</button>
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="rotate(90)">Rotate +90°</button>
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="flipX()">Flip Horizontal</button>
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="flipY()">Flip Vertical</button>
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="undo()">Undo</button>
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="redo()">Redo</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="rotate(-90)" data-i18n="rotateLeft">Rotate -90°</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="rotate(90)" data-i18n="rotateRight">Rotate +90°</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="flipX()" data-i18n="flipH">Flip Horizontal</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="flipY()" data-i18n="flipV">Flip Vertical</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="undo()" data-i18n="undoBtn">Undo</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="redo()" data-i18n="redoBtn">Redo</button>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <label>Width: <input class="border p-1 w-20" type="number" id="width" value="0"></label>
-      <label>Height: <input class="border p-1 w-20" type="number" id="height" value="0"></label>
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="resizeCanvas()">Resize</button>
+      <label data-i18n="widthLabel">Width:</label>
+      <input class="border p-1 w-20" type="number" id="width" value="0">
+      <label data-i18n="heightLabel">Height:</label>
+      <input class="border p-1 w-20" type="number" id="height" value="0">
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="resizeCanvas()" data-i18n="resizeBtn">Resize</button>
     </div>
 
-    <h3 class="font-semibold">画像調整</h3>
+    <h3 class="font-semibold" data-i18n="adjustHeading">画像調整</h3>
     <div class="flex items-center gap-2">
-      <label>Brightness: <input type="range" id="brightness" min="-100" max="100" value="0" oninput="setBrightness(this.value)"></label>
+      <label data-i18n="brightnessLabel">Brightness:</label>
+      <input type="range" id="brightness" min="-100" max="100" value="0" oninput="setBrightness(this.value)">
     </div>
     <div class="flex items-center gap-2">
-      <label>Saturation Threshold: <input type="range" id="saturationThreshold" min="0" max="255" value="50" oninput="setSaturationThreshold(this.value)"></label>
+      <label data-i18n="saturationLabel">Saturation Threshold:</label>
+      <input type="range" id="saturationThreshold" min="0" max="255" value="50" oninput="setSaturationThreshold(this.value)">
+    </div>
+    <div class="flex items-center gap-2">
+      <label data-i18n="zoomLabel">Zoom:</label>
+      <input type="range" id="zoom" min="50" max="200" value="100" oninput="setZoom(this.value)">
     </div>
 
-    <h3 class="font-semibold">フィルター</h3>
+    <h3 class="font-semibold" data-i18n="filterHeading">フィルター</h3>
     <div id="filter-buttons" class="flex flex-wrap gap-2">
-      <button data-filter="none" onclick="setFilter('none')" class="active px-2 py-1 bg-gray-200 rounded">Normal</button>
-      <button data-filter="grayscale" onclick="setFilter('grayscale')" class="px-2 py-1 bg-gray-200 rounded">Grayscale</button>
-      <button data-filter="sepia" onclick="setFilter('sepia')" class="px-2 py-1 bg-gray-200 rounded">Sepia</button>
-      <button data-filter="saturation-gray" onclick="setFilter('saturation-gray')" class="px-2 py-1 bg-gray-200 rounded">Partial Grayscale</button>
+      <button data-filter="none" onclick="setFilter('none')" class="active px-2 py-1 bg-gray-200 rounded" data-i18n="filterNormal">Normal</button>
+      <button data-filter="grayscale" onclick="setFilter('grayscale')" class="px-2 py-1 bg-gray-200 rounded" data-i18n="filterGray">Grayscale</button>
+      <button data-filter="sepia" onclick="setFilter('sepia')" class="px-2 py-1 bg-gray-200 rounded" data-i18n="filterSepia">Sepia</button>
+      <button data-filter="saturation-gray" onclick="setFilter('saturation-gray')" class="px-2 py-1 bg-gray-200 rounded" data-i18n="filterPartial">Partial Grayscale</button>
     </div>
 
     <div class="flex flex-wrap gap-2 items-center">
-      <input type="text" id="textInput" placeholder="Text" class="border p-1">
+      <input type="text" id="textInput" placeholder="Text" class="border p-1" data-i18n-placeholder="textPlaceholder">
       <input type="color" id="textColor" value="#000000">
       <input type="number" id="textSize" value="20" class="border p-1 w-16">
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="enableTextMode()">Add Text</button>
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="enableMaskMode()">Mask Mode</button>
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="batchProcess()">Batch Process</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="enableTextMode()" data-i18n="addTextBtn">Add Text</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="enableMaskMode()" data-i18n="maskModeBtn">Mask Mode</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="batchProcess()" data-i18n="batchBtn">Batch Process</button>
     </div>
 
-    <h3 class="font-semibold">Stickers</h3>
+    <h3 class="font-semibold" data-i18n="stickerHeading">Stickers</h3>
     <div id="sticker-container" class="flex flex-wrap gap-2"></div>
 
     <div id="layer-controls" class="flex flex-wrap gap-2 items-center hidden">
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="bringForward()">Bring Forward</button>
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="sendBackward()">Send Backward</button>
-      <button class="px-2 py-1 bg-red-200 rounded" onclick="deleteLayer()">Delete</button>
-      <label>W:<input id="layerWidth" type="number" class="border p-1 w-16" onchange="updateLayerSize()"></label>
-      <label>H:<input id="layerHeight" type="number" class="border p-1 w-16" onchange="updateLayerSize()"></label>
-      <label>Rot:<input id="layerRotation" type="number" class="border p-1 w-16" onchange="updateLayerRotation()"></label>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="bringForward()" data-i18n="bringForwardBtn">Bring Forward</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="sendBackward()" data-i18n="sendBackwardBtn">Send Backward</button>
+      <button class="px-2 py-1 bg-red-200 rounded" onclick="deleteLayer()" data-i18n="deleteBtn">Delete</button>
+      <label data-i18n="wLabel">W:</label><input id="layerWidth" type="number" class="border p-1 w-16" onchange="updateLayerSize()">
+      <label data-i18n="hLabel">H:</label><input id="layerHeight" type="number" class="border p-1 w-16" onchange="updateLayerSize()">
+      <label data-i18n="rotLabel">Rot:</label><input id="layerRotation" type="number" class="border p-1 w-16" onchange="updateLayerRotation()">
     </div>
 
     <canvas id="canvas" class="mt-2"></canvas>
 
     <div class="flex flex-wrap gap-2">
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="cropCanvas()">トリミング</button>
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="savePNG()">Save PNG</button>
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="saveJPG()">Save JPG</button>
-      <button class="px-2 py-1 bg-gray-200 rounded" onclick="resetEditor()">すべてリセット</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="cropCanvas()" data-i18n="cropBtn">トリミング</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="savePNG()" data-i18n="savePngBtn">Save PNG</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="saveJPG()" data-i18n="saveJpgBtn">Save JPG</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="resetEditor()" data-i18n="resetBtn">すべてリセット</button>
     </div>
   </div>
 

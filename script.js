@@ -20,6 +20,99 @@ let undoStack = [];
 let redoStack = [];
 const MAX_HISTORY = 20;
 
+let currentLang = 'en';
+const i18n = {
+  en: {
+    title: 'Pixboard',
+    rotateLeft: 'Rotate -90°',
+    rotateRight: 'Rotate +90°',
+    flipH: 'Flip Horizontal',
+    flipV: 'Flip Vertical',
+    undoBtn: 'Undo',
+    redoBtn: 'Redo',
+    widthLabel: 'Width:',
+    heightLabel: 'Height:',
+    resizeBtn: 'Resize',
+    adjustHeading: 'Adjustments',
+    brightnessLabel: 'Brightness:',
+    saturationLabel: 'Saturation Threshold:',
+    zoomLabel: 'Zoom:',
+    filterHeading: 'Filters',
+    filterNormal: 'Normal',
+    filterGray: 'Grayscale',
+    filterSepia: 'Sepia',
+    filterPartial: 'Partial Grayscale',
+    textPlaceholder: 'Text',
+    addTextBtn: 'Add Text',
+    maskModeBtn: 'Mask Mode',
+    batchBtn: 'Batch Process',
+    stickerHeading: 'Stickers',
+    bringForwardBtn: 'Bring Forward',
+    sendBackwardBtn: 'Send Backward',
+    deleteBtn: 'Delete',
+    wLabel: 'W:',
+    hLabel: 'H:',
+    rotLabel: 'Rot:',
+    cropBtn: 'Crop',
+    savePngBtn: 'Save PNG',
+    saveJpgBtn: 'Save JPG',
+    resetBtn: 'Reset',
+    restoreConfirm: 'Restore previous session?'
+  },
+  ja: {
+    title: 'ピックスボード',
+    rotateLeft: '左90°回転',
+    rotateRight: '右90°回転',
+    flipH: '左右反転',
+    flipV: '上下反転',
+    undoBtn: '元に戻す',
+    redoBtn: 'やり直す',
+    widthLabel: '幅:',
+    heightLabel: '高さ:',
+    resizeBtn: 'サイズ変更',
+    adjustHeading: '画像調整',
+    brightnessLabel: '明るさ:',
+    saturationLabel: '彩度しきい値:',
+    zoomLabel: 'ズーム:',
+    filterHeading: 'フィルター',
+    filterNormal: 'ノーマル',
+    filterGray: 'グレースケール',
+    filterSepia: 'セピア',
+    filterPartial: '部分グレー',
+    textPlaceholder: 'テキスト',
+    addTextBtn: 'テキスト追加',
+    maskModeBtn: 'マスクモード',
+    batchBtn: '一括処理',
+    stickerHeading: 'スタンプ',
+    bringForwardBtn: '前面へ',
+    sendBackwardBtn: '背面へ',
+    deleteBtn: '削除',
+    wLabel: '幅:',
+    hLabel: '高さ:',
+    rotLabel: '回転:',
+    cropBtn: 'トリミング',
+    savePngBtn: 'PNG保存',
+    saveJpgBtn: 'JPG保存',
+    resetBtn: '全てリセット',
+    restoreConfirm: '前回の編集を復元しますか?'
+  }
+};
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (i18n[currentLang] && i18n[currentLang][key]) {
+      el.textContent = i18n[currentLang][key];
+    }
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if (i18n[currentLang] && i18n[currentLang][key]) {
+      el.placeholder = i18n[currentLang][key];
+    }
+  });
+}
+
 let viewScale = 1;
 let pinchDist = null;
 
@@ -40,8 +133,9 @@ const stickerPaths = [
 window.addEventListener('load', () => {
   initStickers();
   adjustCanvas();
+  applyTranslations();
   const saved = localStorage.getItem('pixboard-autosave');
-  if (saved && confirm('Restore previous session?')) {
+  if (saved && confirm(i18n[currentLang].restoreConfirm)) {
     loadState(saved);
   }
   setInterval(() => {
@@ -52,6 +146,36 @@ window.addEventListener('load', () => {
 });
 
 window.addEventListener('resize', adjustCanvas);
+document.getElementById('langSelect').addEventListener('change', e => {
+  currentLang = e.target.value;
+  document.documentElement.lang = currentLang;
+  applyTranslations();
+});
+
+window.addEventListener('keydown', e => {
+  if (selectedLayer === -1) return;
+  const step = e.shiftKey ? 10 : 1;
+  switch (e.key) {
+    case 'ArrowUp':
+      layers[selectedLayer].y -= step;
+      break;
+    case 'ArrowDown':
+      layers[selectedLayer].y += step;
+      break;
+    case 'ArrowLeft':
+      layers[selectedLayer].x -= step;
+      break;
+    case 'ArrowRight':
+      layers[selectedLayer].x += step;
+      break;
+    case 'Delete':
+      deleteLayer();
+      return;
+    default:
+      return;
+  }
+  redraw();
+});
 
 function adjustCanvas() {
   canvas.width = canvas.clientWidth;
@@ -152,6 +276,7 @@ canvas.addEventListener('wheel', e => {
   e.preventDefault();
   const factor = e.deltaY < 0 ? 1.1 : 0.9;
   viewScale *= factor;
+  document.getElementById('zoom').value = Math.round(viewScale * 100);
   redraw();
 }, { passive: false });
 
@@ -174,6 +299,7 @@ canvas.addEventListener('touchmove', e => {
     const factor = dist / pinchDist;
     pinchDist = dist;
     viewScale *= factor;
+    document.getElementById('zoom').value = Math.round(viewScale * 100);
     redraw();
   }
 }, { passive: false });
@@ -400,6 +526,11 @@ function setFilter(value) {
 function setSaturationThreshold(value) {
   saveState();
   saturationThreshold = parseInt(value, 10) || 0;
+  redraw();
+}
+
+function setZoom(value) {
+  viewScale = parseFloat(value) / 100 || 1;
   redraw();
 }
 
