@@ -3,49 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <title>Pixboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     #canvas { border: 1px solid #ccc; max-width: 100%; }
-    #filter-buttons button.active {
-      background: #eee;
-      font-weight: bold;
-    }
   </style>
 </head>
-<body>
-  <h1>Pixboard</h1>
-  <input type="file" id="fileInput" accept="image/*">␊
-  <div>␊
-    <button onclick="rotate(-90)">Rotate -90°</button>␊
-    <button onclick="rotate(90)">Rotate +90°</button>␊
-    <button onclick="flipX()">Flip Horizontal</button>␊
-    <button onclick="flipY()">Flip Vertical</button>␊
-  </div>␊
-  <div>␊
-    Width: <input type="number" id="width" value="0">
-    Height: <input type="number" id="height" value="0">
-    <button onclick="resizeCanvas()">Resize</button>
+<body class="bg-gray-50 text-gray-800">
+  <div class="container mx-auto p-4 space-y-4">
+    <h1 class="text-2xl font-bold">Pixboard</h1>
+    <input type="file" id="fileInput" accept="image/*" multiple class="block mb-2">
+
+    <div class="flex flex-wrap gap-2">
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="rotate(-90)">Rotate -90°</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="rotate(90)">Rotate +90°</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="flipX()">Flip Horizontal</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="flipY()">Flip Vertical</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="undo()">Undo</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="redo()">Redo</button>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <label>Width: <input class="border p-1 w-20" type="number" id="width" value="0"></label>
+      <label>Height: <input class="border p-1 w-20" type="number" id="height" value="0"></label>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="resizeCanvas()">Resize</button>
+    </div>
+
+    <h3 class="font-semibold">画像調整</h3>
+    <div class="flex items-center gap-2">
+      <label>Brightness: <input type="range" id="brightness" min="-100" max="100" value="0" oninput="setBrightness(this.value)"></label>
+    </div>
+    <div class="flex items-center gap-2">
+      <label>Saturation Threshold: <input type="range" id="saturationThreshold" min="0" max="255" value="50" oninput="setSaturationThreshold(this.value)"></label>
+    </div>
+
+    <h3 class="font-semibold">フィルター</h3>
+    <div id="filter-buttons" class="flex flex-wrap gap-2">
+      <button data-filter="none" onclick="setFilter('none')" class="active px-2 py-1 bg-gray-200 rounded">Normal</button>
+      <button data-filter="grayscale" onclick="setFilter('grayscale')" class="px-2 py-1 bg-gray-200 rounded">Grayscale</button>
+      <button data-filter="sepia" onclick="setFilter('sepia')" class="px-2 py-1 bg-gray-200 rounded">Sepia</button>
+      <button data-filter="saturation-gray" onclick="setFilter('saturation-gray')" class="px-2 py-1 bg-gray-200 rounded">Partial Grayscale</button>
+    </div>
+
+    <div class="flex flex-wrap gap-2 items-center">
+      <input type="text" id="textInput" placeholder="Text" class="border p-1">
+      <input type="color" id="textColor" value="#000000">
+      <input type="number" id="textSize" value="20" class="border p-1 w-16">
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="enableTextMode()">Add Text</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="batchProcess()">Batch Process</button>
+    </div>
+
+    <canvas id="canvas" class="mt-2"></canvas>
+
+    <div class="flex flex-wrap gap-2">
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="cropCanvas()">トリミング</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="savePNG()">Save PNG</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="saveJPG()">Save JPG</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="resetEditor()">すべてリセット</button>
+    </div>
   </div>
-  <h3>画像調整</h3>
-  <div>
-    Brightness: <input type="range" id="brightness" min="-100" max="100" value="0" oninput="setBrightness(this.value)">
-  </div>
-  <div>
-    Saturation Threshold: <input type="range" id="saturationThreshold" min="0" max="255" value="50" oninput="setSaturationThreshold(this.value)">
-  </div>
-  <h3>フィルター</h3>
-  <div id="filter-buttons">
-    <button data-filter="none" onclick="setFilter('none')" class="active">Normal</button>
-    <button data-filter="grayscale" onclick="setFilter('grayscale')">Grayscale</button>
-    <button data-filter="sepia" onclick="setFilter('sepia')">Sepia</button>
-    <button data-filter="saturation-gray" onclick="setFilter('saturation-gray')">Partial Grayscale</button>
-  </div>
-  <canvas id="canvas"></canvas>
-  <div>
-    <button onclick="cropCanvas()">トリミング</button>
-    <button onclick="savePNG()">Save PNG</button>
-    <button onclick="saveJPG()">Save JPG</button>
-    <button onclick="resetEditor()">すべてリセット</button>
-  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
