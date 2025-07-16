@@ -24,6 +24,11 @@
   <div>
     Brightness: <input type="range" id="brightness" min="-100" max="100" value="0" oninput="setBrightness(this.value)">
   </div>
+  <div>
+    <button onclick="setFilter('none')">Normal</button>
+    <button onclick="setFilter('grayscale')">Grayscale</button>
+    <button onclick="setFilter('sepia')">Sepia</button>
+  </div>
   <canvas id="canvas"></canvas>
   <div>
     <button onclick="savePNG()">Save PNG</button>
