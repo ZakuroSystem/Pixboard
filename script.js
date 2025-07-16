@@ -19,6 +19,16 @@ let batchFiles = [];
 let undoStack = [];
 let redoStack = [];
 const MAX_HISTORY = 20;
+
+let viewScale = 1;
+let pinchDist = null;
+
+function getCanvasCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / viewScale;
+  const y = (e.clientY - rect.top) / viewScale;
+  return { x, y };
+}
 const stickerPaths = [
   'assets/stickers/circle.png',
   'assets/stickers/heart.png',
@@ -29,6 +39,7 @@ const stickerPaths = [
 
 window.addEventListener('load', () => {
   initStickers();
+  adjustCanvas();
   const saved = localStorage.getItem('pixboard-autosave');
   if (saved && confirm('Restore previous session?')) {
     loadState(saved);
@@ -40,6 +51,16 @@ window.addEventListener('load', () => {
   }, 5000);
 });
 
+window.addEventListener('resize', adjustCanvas);
+
+function adjustCanvas() {
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+  document.getElementById('width').value = canvas.width;
+  document.getElementById('height').value = canvas.height;
+  redraw();
+}
+
 document.getElementById('fileInput').addEventListener('change', event => {
   batchFiles = Array.from(event.target.files);
   if (batchFiles.length === 0) return;
@@ -50,13 +71,12 @@ function addImageFromFile(file) {
   const url = URL.createObjectURL(file);
   const image = new Image();
   image.onload = () => {
-    if (canvas.width === 0 || canvas.height === 0) {
-      canvas.width = image.width;
-      canvas.height = image.height;
-      document.getElementById('width').value = image.width;
-      document.getElementById('height').value = image.height;
-    }
-    layers.push({type:'image', img:image, x:0, y:0, width:image.width, height:image.height, rotation:0, scaleX:1, scaleY:1, visible:true, mask:null});
+    const scale = Math.min(canvas.width / image.width, canvas.height / image.height, 1);
+    const w = image.width * scale;
+    const h = image.height * scale;
+    const x = (canvas.width - w) / 2;
+    const y = (canvas.height - h) / 2;
+    layers.push({type:'image', img:image, x, y, width:w, height:h, rotation:0, scaleX:1, scaleY:1, visible:true, mask:null});
     selectedLayer = layers.length - 1;
     resetHistory();
     redraw();
@@ -65,8 +85,7 @@ function addImageFromFile(file) {
 }
 
 canvas.addEventListener('mousedown', e => {
-  const x = e.offsetX;
-  const y = e.offsetY;
+  const {x, y} = getCanvasCoords(e);
   if (isTextMode) {
     addTextLayer(x, y);
     isTextMode = false;
@@ -94,8 +113,7 @@ canvas.addEventListener('mousedown', e => {
 });
 
 canvas.addEventListener('mousemove', e => {
-  const x = e.offsetX;
-  const y = e.offsetY;
+  const {x, y} = getCanvasCoords(e);
   if (draggingLayer && selectedLayer !== -1) {
     layers[selectedLayer].x = x - dragOffsetX;
     layers[selectedLayer].y = y - dragOffsetY;
@@ -130,8 +148,45 @@ canvas.addEventListener('mouseup', () => {
   }
 });
 
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.1 : 0.9;
+  viewScale *= factor;
+  redraw();
+}, { passive: false });
+
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    pinchDist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && pinchDist) {
+    e.preventDefault();
+    const dist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    const factor = dist / pinchDist;
+    pinchDist = dist;
+    viewScale *= factor;
+    redraw();
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  if (e.touches.length < 2) pinchDist = null;
+});
+
 function redraw() {
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.scale(viewScale, viewScale);
   drawLayers(ctx);
   applyFilters();
   if (cropRect) {
@@ -148,6 +203,7 @@ function redraw() {
     ctx.strokeRect(maskRect.x, maskRect.y, maskRect.w, maskRect.h);
     ctx.restore();
   }
+  ctx.restore();
 }
 
 function drawLayers(targetCtx) {
@@ -255,6 +311,8 @@ function resizeCanvas() {
   if (w > 0 && h > 0) {
     canvas.width = w;
     canvas.height = h;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
     redraw();
   }
 }
@@ -312,6 +370,8 @@ function cropCanvas() {
   image.onload = () => {
     canvas.width = cropRect.w;
     canvas.height = cropRect.h;
+    canvas.style.width = cropRect.w + 'px';
+    canvas.style.height = cropRect.h + 'px';
     document.getElementById('width').value = cropRect.w;
     document.getElementById('height').value = cropRect.h;
     layers.length = 0;
@@ -470,6 +530,8 @@ function loadState(dataURL) {
   image.onload = () => {
     canvas.width = image.width;
     canvas.height = image.height;
+    canvas.style.width = image.width + 'px';
+    canvas.style.height = image.height + 'px';
     document.getElementById('width').value = image.width;
     document.getElementById('height').value = image.height;
     layers.length = 0;
