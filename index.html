@@ -5,39 +5,47 @@
   <title>Pixboard</title>
   <style>
     #canvas { border: 1px solid #ccc; max-width: 100%; }
+    #filter-buttons button.active {
+      background: #eee;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <h1>Pixboard</h1>
-  <input type="file" id="fileInput" accept="image/*">
-  <div>
-    <button onclick="rotate(-90)">Rotate -90°</button>
-    <button onclick="rotate(90)">Rotate +90°</button>
-    <button onclick="flipX()">Flip Horizontal</button>
-    <button onclick="flipY()">Flip Vertical</button>
-  </div>
-  <div>
+  <input type="file" id="fileInput" accept="image/*">␊
+  <div>␊
+    <button onclick="rotate(-90)">Rotate -90°</button>␊
+    <button onclick="rotate(90)">Rotate +90°</button>␊
+    <button onclick="flipX()">Flip Horizontal</button>␊
+    <button onclick="flipY()">Flip Vertical</button>␊
+  </div>␊
+  <div>␊
     Width: <input type="number" id="width" value="0">
     Height: <input type="number" id="height" value="0">
     <button onclick="resizeCanvas()">Resize</button>
   </div>
+  <h3>画像調整</h3>
   <div>
     Brightness: <input type="range" id="brightness" min="-100" max="100" value="0" oninput="setBrightness(this.value)">
   </div>
   <div>
     Saturation Threshold: <input type="range" id="saturationThreshold" min="0" max="255" value="50" oninput="setSaturationThreshold(this.value)">
   </div>
-  <div>
-    <button onclick="setFilter('none')">Normal</button>
-    <button onclick="setFilter('grayscale')">Grayscale</button>
-    <button onclick="setFilter('sepia')">Sepia</button>
-    <button onclick="setFilter('saturation-gray')">Partial Grayscale</button>
+  <h3>フィルター</h3>
+  <div id="filter-buttons">
+    <button data-filter="none" onclick="setFilter('none')" class="active">Normal</button>
+    <button data-filter="grayscale" onclick="setFilter('grayscale')">Grayscale</button>
+    <button data-filter="sepia" onclick="setFilter('sepia')">Sepia</button>
+    <button data-filter="saturation-gray" onclick="setFilter('saturation-gray')">Partial Grayscale</button>
   </div>
   <canvas id="canvas"></canvas>
   <div>
+    <button onclick="cropCanvas()">トリミング</button>
     <button onclick="savePNG()">Save PNG</button>
     <button onclick="saveJPG()">Save JPG</button>
+    <button onclick="resetEditor()">すべてリセット</button>
   </div>
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

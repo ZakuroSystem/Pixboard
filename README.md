@@ -1,5 +1,28 @@
 # Pixboard
 
-A minimal browser-based image editor built with HTML5 canvas. You can load an image, rotate or flip it, resize the canvas, and save the result as PNG or JPEG.
+Pixboard is a lightweight image editor that runs entirely in your browser. All processing is done locally so it's free and instant to use.
 
-Open `index.html` in a browser to use the editor.
+![Filter Demo](docs/filter-demo.png)
+
+## Features
+
+- Load any image from your device
+- Rotate and flip
+- Resize the canvas
+- Adjust brightness
+- Partial grayscale filter with saturation threshold
+- Quick filter switching (Normal/Grayscale/Sepia/Partial Gray)
+- Save the result as PNG or JPEG
+
+### Pixboard の強み
+
+- ローカル処理でプライバシー安心
+- 無料でインストール不要
+- すぐに使えるシンプルなUI
+
+## Coming Soon
+
+- Cropping tool
+- Undo / redo
+
+Open `index.html` in a browser to start editing.

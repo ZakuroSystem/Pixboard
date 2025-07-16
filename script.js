@@ -7,8 +7,12 @@ let rotation = 0;
 let brightness = 0;
 let filter = 'none';
 let saturationThreshold = 50;
+let isDragging = false;
+let cropRect = null;
+let startX = 0;
+let startY = 0;
 
-document.getElementById('fileInput').addEventListener('change', event => {
+document.getElementById('fileInput').addEventListener('change', event => {␊
   const file = event.target.files[0];
   if (!file) return;
   const url = URL.createObjectURL(file);
@@ -26,6 +30,30 @@ document.getElementById('fileInput').addEventListener('change', event => {
   img.src = url;
 });
 
+canvas.addEventListener('mousedown', e => {
+  isDragging = true;
+  startX = e.offsetX;
+  startY = e.offsetY;
+  cropRect = null;
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  const x = e.offsetX;
+  const y = e.offsetY;
+  cropRect = {
+    x: Math.min(startX, x),
+    y: Math.min(startY, y),
+    w: Math.abs(x - startX),
+    h: Math.abs(y - startY)
+  };
+  redraw();
+});
+
+canvas.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
 function redraw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
@@ -36,6 +64,14 @@ function redraw() {
   ctx.restore();
 
   applyFilters();
+
+  if (cropRect) {
+    ctx.save();
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+    ctx.restore();
+  }
 }
 
 function applyFilters() {
@@ -125,12 +161,66 @@ function saveBlob(blob, filename) {
   URL.revokeObjectURL(link.href);
 }
 
+function resetEditor() {
+  brightness = 0;
+  filter = 'none';
+  saturationThreshold = 50;
+  scaleX = 1;
+  scaleY = 1;
+  rotation = 0;
+  cropRect = null;
+  document.getElementById('brightness').value = 0;
+  document.getElementById('saturationThreshold').value = 50;
+  document.querySelectorAll('#filter-buttons button').forEach(btn => btn.classList.remove('active'));
+  const normalBtn = document.querySelector('#filter-buttons button[data-filter="none"]');
+  if (normalBtn) normalBtn.classList.add('active');
+  redraw();
+}
+
+function cropCanvas() {
+  if (!cropRect || cropRect.w === 0 || cropRect.h === 0) return;
+  const off = document.createElement('canvas');
+  off.width = canvas.width;
+  off.height = canvas.height;
+  const offCtx = off.getContext('2d');
+  offCtx.save();
+  offCtx.translate(canvas.width / 2, canvas.height / 2);
+  offCtx.scale(scaleX, scaleY);
+  offCtx.rotate(rotation * Math.PI / 180);
+  offCtx.drawImage(img, -img.width / 2, -img.height / 2);
+  offCtx.restore();
+
+  const data = offCtx.getImageData(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+  const temp = document.createElement('canvas');
+  temp.width = cropRect.w;
+  temp.height = cropRect.h;
+  temp.getContext('2d').putImageData(data, 0, 0);
+  const url = temp.toDataURL();
+
+  img = new Image();
+  img.onload = () => {
+    canvas.width = cropRect.w;
+    canvas.height = cropRect.h;
+    document.getElementById('width').value = cropRect.w;
+    document.getElementById('height').value = cropRect.h;
+    scaleX = 1;
+    scaleY = 1;
+    rotation = 0;
+    cropRect = null;
+    redraw();
+  };
+  img.src = url;
+}
+
 function setBrightness(value) {
   brightness = parseInt(value, 10) || 0;
   redraw();
 }
 function setFilter(value) {
   filter = value || 'none';
+  document.querySelectorAll('#filter-buttons button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
   redraw();
 }
 
