@@ -6,6 +6,7 @@ let scaleY = 1;
 let rotation = 0;
 let brightness = 0;
 let filter = 'none';
+let saturationThreshold = 50;
 
 document.getElementById('fileInput').addEventListener('change', event => {
   const file = event.target.files[0];
@@ -20,12 +21,12 @@ document.getElementById('fileInput').addEventListener('change', event => {
     scaleX = 1;
     scaleY = 1;
     rotation = 0;
-    draw();
+    redraw();
   };
   img.src = url;
 });
 
-function draw() {
+function redraw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   ctx.translate(canvas.width / 2, canvas.height / 2);
@@ -34,51 +35,68 @@ function draw() {
   ctx.drawImage(img, -img.width / 2, -img.height / 2);
   ctx.restore();
 
-  if (brightness !== 0 || filter !== 'none') {
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    const adj = (brightness / 100) * 255;
-    for (let i = 0; i < data.length; i += 4) {
-      let r = data[i];
-      let g = data[i + 1];
-      let b = data[i + 2];
-      if (filter === 'grayscale') {
+  applyFilters();
+}
+
+function applyFilters() {
+  if (brightness === 0 && filter === 'none') return;
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const adj = (brightness / 100) * 255;
+
+  for (let i = 0; i < data.length; i += 4) {
+    let r = data[i];
+    let g = data[i + 1];
+    let b = data[i + 2];
+
+    if (brightness !== 0) {
+      r += adj;
+      g += adj;
+      b += adj;
+    }
+
+    if (filter === 'grayscale') {
+      const avg = (r + g + b) / 3;
+      r = g = b = avg;
+    } else if (filter === 'sepia') {
+      const tr = 0.393 * r + 0.769 * g + 0.189 * b;
+      const tg = 0.349 * r + 0.686 * g + 0.168 * b;
+      const tb = 0.272 * r + 0.534 * g + 0.131 * b;
+      r = tr;
+      g = tg;
+      b = tb;
+    } else if (filter === 'saturation-gray') {
+      const maxVal = Math.max(r, g, b);
+      const minVal = Math.min(r, g, b);
+      const sat = maxVal - minVal;
+      if (sat <= saturationThreshold) {
         const avg = (r + g + b) / 3;
         r = g = b = avg;
-      } else if (filter === 'sepia') {
-        const tr = 0.393 * r + 0.769 * g + 0.189 * b;
-        const tg = 0.349 * r + 0.686 * g + 0.168 * b;
-        const tb = 0.272 * r + 0.534 * g + 0.131 * b;
-        r = tr;
-        g = tg;
-        b = tb;
       }
-      if (brightness !== 0) {
-        r += adj;
-        g += adj;
-        b += adj;
-      }
-      data[i] = Math.min(255, Math.max(0, r));
-      data[i + 1] = Math.min(255, Math.max(0, g));
-      data[i + 2] = Math.min(255, Math.max(0, b));
     }
-    ctx.putImageData(imageData, 0, 0);
+
+    data[i] = Math.min(255, Math.max(0, r));
+    data[i + 1] = Math.min(255, Math.max(0, g));
+    data[i + 2] = Math.min(255, Math.max(0, b));
   }
+
+  ctx.putImageData(imageData, 0, 0);
 }
 
 function rotate(deg) {
   rotation = (rotation + deg) % 360;
-  draw();
+  redraw();
 }
 
 function flipX() {
   scaleX *= -1;
-  draw();
+  redraw();
 }
 
 function flipY() {
   scaleY *= -1;
-  draw();
+  redraw();
 }
 
 function resizeCanvas() {
@@ -87,7 +105,7 @@ function resizeCanvas() {
   if (w > 0 && h > 0) {
     canvas.width = w;
     canvas.height = h;
-    draw();
+    redraw();
   }
 }
 
@@ -109,9 +127,14 @@ function saveBlob(blob, filename) {
 
 function setBrightness(value) {
   brightness = parseInt(value, 10) || 0;
-  draw();
+  redraw();
 }
 function setFilter(value) {
   filter = value || 'none';
-  draw();
+  redraw();
+}
+
+function setSaturationThreshold(value) {
+  saturationThreshold = parseInt(value, 10) || 0;
+  redraw();
 }

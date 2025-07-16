@@ -25,9 +25,13 @@
     Brightness: <input type="range" id="brightness" min="-100" max="100" value="0" oninput="setBrightness(this.value)">
   </div>
   <div>
+    Saturation Threshold: <input type="range" id="saturationThreshold" min="0" max="255" value="50" oninput="setSaturationThreshold(this.value)">
+  </div>
+  <div>
     <button onclick="setFilter('none')">Normal</button>
     <button onclick="setFilter('grayscale')">Grayscale</button>
     <button onclick="setFilter('sepia')">Sepia</button>
+    <button onclick="setFilter('saturation-gray')">Partial Grayscale</button>
   </div>
   <canvas id="canvas"></canvas>
   <div>
