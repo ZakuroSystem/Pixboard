@@ -52,6 +52,18 @@
       <button class="px-2 py-1 bg-gray-200 rounded" onclick="batchProcess()">Batch Process</button>
     </div>
 
+    <h3 class="font-semibold">Stickers</h3>
+    <div id="sticker-container" class="flex flex-wrap gap-2"></div>
+
+    <div id="layer-controls" class="flex flex-wrap gap-2 items-center hidden">
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="bringForward()">Bring Forward</button>
+      <button class="px-2 py-1 bg-gray-200 rounded" onclick="sendBackward()">Send Backward</button>
+      <button class="px-2 py-1 bg-red-200 rounded" onclick="deleteLayer()">Delete</button>
+      <label>W:<input id="layerWidth" type="number" class="border p-1 w-16" onchange="updateLayerSize()"></label>
+      <label>H:<input id="layerHeight" type="number" class="border p-1 w-16" onchange="updateLayerSize()"></label>
+      <label>Rot:<input id="layerRotation" type="number" class="border p-1 w-16" onchange="updateLayerRotation()"></label>
+    </div>
+
     <canvas id="canvas" class="mt-2"></canvas>
 
     <div class="flex flex-wrap gap-2">
