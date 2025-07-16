@@ -7,9 +7,11 @@ let filter = 'none';
 let saturationThreshold = 50;
 let draggingLayer = false;
 let cropping = false;
+let maskMode = false;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 let cropRect = null;
+let maskRect = null;
 let startX = 0;
 let startY = 0;
 let isTextMode = false;
@@ -54,7 +56,7 @@ function addImageFromFile(file) {
       document.getElementById('width').value = image.width;
       document.getElementById('height').value = image.height;
     }
-    layers.push({type:'image', img:image, x:0, y:0, width:image.width, height:image.height, rotation:0, scaleX:1, scaleY:1, visible:true});
+    layers.push({type:'image', img:image, x:0, y:0, width:image.width, height:image.height, rotation:0, scaleX:1, scaleY:1, visible:true, mask:null});
     selectedLayer = layers.length - 1;
     resetHistory();
     redraw();
@@ -68,6 +70,12 @@ canvas.addEventListener('mousedown', e => {
   if (isTextMode) {
     addTextLayer(x, y);
     isTextMode = false;
+    return;
+  }
+  if (maskMode && selectedLayer !== -1) {
+    startX = x;
+    startY = y;
+    maskRect = null;
     return;
   }
   const idx = getLayerAt(x, y);
@@ -92,6 +100,14 @@ canvas.addEventListener('mousemove', e => {
     layers[selectedLayer].x = x - dragOffsetX;
     layers[selectedLayer].y = y - dragOffsetY;
     redraw();
+  } else if (maskMode && maskRect !== null) {
+    maskRect = {
+      x: Math.min(startX, x),
+      y: Math.min(startY, y),
+      w: Math.abs(x - startX),
+      h: Math.abs(y - startY)
+    };
+    redraw();
   } else if (cropping) {
     cropRect = {
       x: Math.min(startX, x),
@@ -106,6 +122,12 @@ canvas.addEventListener('mousemove', e => {
 canvas.addEventListener('mouseup', () => {
   draggingLayer = false;
   cropping = false;
+  if (maskMode && selectedLayer !== -1 && maskRect) {
+    layers[selectedLayer].mask = maskRect;
+    maskRect = null;
+    maskMode = false;
+    redraw();
+  }
 });
 
 function redraw() {
@@ -119,12 +141,24 @@ function redraw() {
     ctx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
     ctx.restore();
   }
+  if (maskRect) {
+    ctx.save();
+    ctx.strokeStyle = 'green';
+    ctx.setLineDash([4, 2]);
+    ctx.strokeRect(maskRect.x, maskRect.y, maskRect.w, maskRect.h);
+    ctx.restore();
+  }
 }
 
 function drawLayers(targetCtx) {
   layers.forEach((layer, i) => {
     if (!layer.visible) return;
     targetCtx.save();
+    if (layer.mask) {
+      targetCtx.beginPath();
+      targetCtx.rect(layer.mask.x, layer.mask.y, layer.mask.w, layer.mask.h);
+      targetCtx.clip();
+    }
     targetCtx.translate(layer.x + layer.width / 2, layer.y + layer.height / 2);
     targetCtx.rotate((layer.rotation || 0) * Math.PI / 180);
     if (layer.type === 'image' || layer.type === 'sticker') {
@@ -276,18 +310,18 @@ function cropCanvas() {
 
   const image = new Image();
   image.onload = () => {
-    canvas.width = cropRect.w;␊
-    canvas.height = cropRect.h;␊
-    document.getElementById('width').value = cropRect.w;␊
-    document.getElementById('height').value = cropRect.h;␊
+    canvas.width = cropRect.w;
+    canvas.height = cropRect.h;
+    document.getElementById('width').value = cropRect.w;
+    document.getElementById('height').value = cropRect.h;
     layers.length = 0;
-    layers.push({type:'image', img:image, x:0, y:0, width:image.width, height:image.height, rotation:0, scaleX:1, scaleY:1, visible:true});
+    layers.push({type:'image', img:image, x:0, y:0, width:image.width, height:image.height, rotation:0, scaleX:1, scaleY:1, visible:true, mask:null});
     selectedLayer = 0;
-    cropRect = null;␊
-    redraw();␊
-  };␊
+    cropRect = null;
+    redraw();
+  };
   image.src = url;
-}␊
+}
 
 function setBrightness(value) {
   saveState();
@@ -313,13 +347,19 @@ function enableTextMode() {
   isTextMode = true;
 }
 
+function enableMaskMode() {
+  if (selectedLayer !== -1) {
+    maskMode = true;
+  }
+}
+
 function addTextLayer(x, y) {
   const text = document.getElementById('textInput').value;
   if (!text) return;
   const color = document.getElementById('textColor').value;
   const size = parseInt(document.getElementById('textSize').value, 10) || 20;
   const width = ctx.measureText(text).width;
-  layers.push({type:'text', text, color, size, x, y, width, height:size, rotation:0, scaleX:1, scaleY:1, visible:true});
+  layers.push({type:'text', text, color, size, x, y, width, height:size, rotation:0, scaleX:1, scaleY:1, visible:true, mask:null});
   selectedLayer = layers.length - 1;
   saveState();
   redraw();
@@ -328,7 +368,7 @@ function addTextLayer(x, y) {
 function addSticker(src) {
   const image = new Image();
   image.onload = () => {
-    layers.push({type:'sticker', img:image, x:0, y:0, width:image.width, height:image.height, rotation:0, scaleX:1, scaleY:1, visible:true});
+    layers.push({type:'sticker', img:image, x:0, y:0, width:image.width, height:image.height, rotation:0, scaleX:1, scaleY:1, visible:true, mask:null});
     selectedLayer = layers.length - 1;
     updateLayerControls();
     saveState();
@@ -433,7 +473,7 @@ function loadState(dataURL) {
     document.getElementById('width').value = image.width;
     document.getElementById('height').value = image.height;
     layers.length = 0;
-    layers.push({type:'image', img:image, x:0, y:0, width:image.width, height:image.height, rotation:0, scaleX:1, scaleY:1, visible:true});
+    layers.push({type:'image', img:image, x:0, y:0, width:image.width, height:image.height, rotation:0, scaleX:1, scaleY:1, visible:true, mask:null});
     selectedLayer = 0;
     brightness = 0;
     filter = 'none';

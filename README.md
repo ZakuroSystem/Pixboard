@@ -13,6 +13,7 @@ Pixboard is a lightweight image editor that runs entirely in your browser. All p
 - Partial grayscale filter with saturation threshold
 - Quick filter switching (Normal/Grayscale/Sepia/Partial Gray)
 - Save the result as PNG or JPEG
+- Mask mode for layer clipping
 
 ### Pixboard の強み
 
