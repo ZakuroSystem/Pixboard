@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pixboard</title>
+  <style>
+    #canvas { border: 1px solid #ccc; max-width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>Pixboard</h1>
+  <input type="file" id="fileInput" accept="image/*">
+  <div>
+    <button onclick="rotate(-90)">Rotate -90°</button>
+    <button onclick="rotate(90)">Rotate +90°</button>
+    <button onclick="flipX()">Flip Horizontal</button>
+    <button onclick="flipY()">Flip Vertical</button>
+  </div>
+  <div>
+    Width: <input type="number" id="width" value="0">
+    Height: <input type="number" id="height" value="0">
+    <button onclick="resizeCanvas()">Resize</button>
+  </div>
+  <canvas id="canvas"></canvas>
+  <div>
+    <button onclick="savePNG()">Save PNG</button>
+    <button onclick="saveJPG()">Save JPG</button>
+  </div>
+<script src="script.js"></script>
+</body>
+</html>
