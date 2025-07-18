@@ -1,0 +1,36 @@
+body {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+header, footer, .sidebar {
+  background-color: #111827;
+}
+
+.btn {
+  background-color: #374151;
+  color: #f3f4f6;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  display: inline-block;
+}
+
+.btn:hover {
+  background-color: #4b5563;
+}
+
+input[type="number"],
+input[type="text"],
+select {
+  background-color: #1f2937;
+  border: 1px solid #4b5563;
+  color: #f3f4f6;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+}
+
+#canvas {
+  background-color: #27272a;
+  border: 1px solid #4b5563;
+  touch-action: none;
+}
