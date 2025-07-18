@@ -14,6 +14,11 @@ let cropRect = null;
 let maskRect = null;
 let startX = 0;
 let startY = 0;
+let draggingHandle = null;
+let rotatingLayer = false;
+let rotateStartAngle = 0;
+let rotateStartRotation = 0;
+const HANDLE_SIZE = 6;
 let isTextMode = false;
 let batchFiles = [];
 let undoStack = [];
@@ -221,6 +226,22 @@ canvas.addEventListener('mousedown', e => {
     maskRect = null;
     return;
   }
+  const handle = getHandleAt(x, y);
+  if (handle) {
+    if (handle === 'rotate') {
+      rotatingLayer = true;
+      const layer = layers[selectedLayer];
+      const cx = layer.x + layer.width / 2;
+      const cy = layer.y + layer.height / 2;
+      rotateStartAngle = Math.atan2(y - cy, x - cx);
+      rotateStartRotation = layer.rotation || 0;
+    } else {
+      draggingHandle = handle;
+      startX = x;
+      startY = y;
+    }
+    return;
+  }
   const idx = getLayerAt(x, y);
   if (idx !== -1) {
     selectedLayer = idx;
@@ -238,7 +259,42 @@ canvas.addEventListener('mousedown', e => {
 
 canvas.addEventListener('mousemove', e => {
   const {x, y} = getCanvasCoords(e);
-  if (draggingLayer && selectedLayer !== -1) {
+  if (draggingHandle && selectedLayer !== -1) {
+    const layer = layers[selectedLayer];
+    const dx = x - startX;
+    const dy = y - startY;
+    if (draggingHandle === 'nw') {
+      layer.x += dx;
+      layer.y += dy;
+      layer.width -= dx;
+      layer.height -= dy;
+    } else if (draggingHandle === 'ne') {
+      layer.y += dy;
+      layer.width += dx;
+      layer.height -= dy;
+    } else if (draggingHandle === 'sw') {
+      layer.x += dx;
+      layer.width -= dx;
+      layer.height += dy;
+    } else if (draggingHandle === 'se') {
+      layer.width += dx;
+      layer.height += dy;
+    }
+    startX = x;
+    startY = y;
+    document.getElementById('layerWidth').value = Math.abs(layer.width);
+    document.getElementById('layerHeight').value = Math.abs(layer.height);
+    redraw();
+  } else if (rotatingLayer && selectedLayer !== -1) {
+    const layer = layers[selectedLayer];
+    const cx = layer.x + layer.width / 2;
+    const cy = layer.y + layer.height / 2;
+    const ang = Math.atan2(y - cy, x - cx);
+    const deg = (ang - rotateStartAngle) * 180 / Math.PI;
+    layer.rotation = rotateStartRotation + deg;
+    document.getElementById('layerRotation').value = layer.rotation;
+    redraw();
+  } else if (draggingLayer && selectedLayer !== -1) {
     layers[selectedLayer].x = x - dragOffsetX;
     layers[selectedLayer].y = y - dragOffsetY;
     redraw();
@@ -264,6 +320,8 @@ canvas.addEventListener('mousemove', e => {
 canvas.addEventListener('mouseup', () => {
   draggingLayer = false;
   cropping = false;
+  draggingHandle = null;
+  rotatingLayer = false;
   if (maskMode && selectedLayer !== -1 && maskRect) {
     layers[selectedLayer].mask = maskRect;
     maskRect = null;
@@ -274,7 +332,7 @@ canvas.addEventListener('mouseup', () => {
 
 canvas.addEventListener('wheel', e => {
   e.preventDefault();
-  const factor = e.deltaY < 0 ? 1.1 : 0.9;
+  const factor = e.deltaY < 0 ? 1.05 : 0.95;
   viewScale *= factor;
   document.getElementById('zoom').value = Math.round(viewScale * 100);
   redraw();
@@ -357,6 +415,29 @@ function drawLayers(targetCtx) {
       targetCtx.strokeStyle = 'blue';
       targetCtx.lineWidth = 1;
       targetCtx.strokeRect(layer.x, layer.y, layer.width, layer.height);
+      const hs = HANDLE_SIZE;
+      const handles = [
+        [layer.x, layer.y],
+        [layer.x + layer.width, layer.y],
+        [layer.x, layer.y + layer.height],
+        [layer.x + layer.width, layer.y + layer.height]
+      ];
+      targetCtx.fillStyle = 'white';
+      handles.forEach(pt => {
+        targetCtx.fillRect(pt[0] - hs, pt[1] - hs, hs * 2, hs * 2);
+        targetCtx.strokeRect(pt[0] - hs, pt[1] - hs, hs * 2, hs * 2);
+      });
+      // rotation handle
+      const cx = layer.x + layer.width / 2;
+      const cy = layer.y - 20;
+      targetCtx.beginPath();
+      targetCtx.moveTo(cx, layer.y);
+      targetCtx.lineTo(cx, cy);
+      targetCtx.stroke();
+      targetCtx.beginPath();
+      targetCtx.arc(cx, cy, hs * 1.5, 0, Math.PI * 2);
+      targetCtx.fill();
+      targetCtx.stroke();
       targetCtx.restore();
     }
   });
@@ -589,6 +670,31 @@ function getLayerAt(x, y) {
     }
   }
   return -1;
+}
+
+function getHandleAt(x, y) {
+  if (selectedLayer === -1) return null;
+  const layer = layers[selectedLayer];
+  const hs = HANDLE_SIZE;
+  const handles = {
+    nw: {x: layer.x, y: layer.y},
+    ne: {x: layer.x + layer.width, y: layer.y},
+    sw: {x: layer.x, y: layer.y + layer.height},
+    se: {x: layer.x + layer.width, y: layer.y + layer.height}
+  };
+  for (const key in handles) {
+    const hx = handles[key].x;
+    const hy = handles[key].y;
+    if (x >= hx - hs && x <= hx + hs && y >= hy - hs && y <= hy + hs) {
+      return key;
+    }
+  }
+  const cx = layer.x + layer.width / 2;
+  const cy = layer.y - 20;
+  if (Math.hypot(x - cx, y - cy) <= hs * 1.5) {
+    return 'rotate';
+  }
+  return null;
 }
 
 function updateLayerControls() {
