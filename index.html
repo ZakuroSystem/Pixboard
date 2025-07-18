@@ -47,6 +47,10 @@
       <input type="range" id="brightness" min="-100" max="100" value="0" oninput="setBrightness(this.value)">
     </div>
     <div class="flex items-center gap-2">
+      <label data-i18n="contrastLabel">Contrast:</label>
+      <input type="range" id="contrast" min="-100" max="100" value="0" oninput="setContrast(this.value)">
+    </div>
+    <div class="flex items-center gap-2">
       <label data-i18n="saturationLabel">Saturation Threshold:</label>
       <input type="range" id="saturationThreshold" min="0" max="255" value="50" oninput="setSaturationThreshold(this.value)">
     </div>

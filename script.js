@@ -3,6 +3,7 @@ const ctx = canvas.getContext('2d');
 const layers = [];
 let selectedLayer = -1;
 let brightness = 0;
+let contrast = 0;
 let filter = 'none';
 let saturationThreshold = 50;
 let draggingLayer = false;
@@ -41,6 +42,7 @@ const i18n = {
     adjustHeading: 'Adjustments',
     brightnessLabel: 'Brightness:',
     saturationLabel: 'Saturation Threshold:',
+    contrastLabel: 'Contrast:',
     zoomLabel: 'Zoom:',
     filterHeading: 'Filters',
     filterNormal: 'Normal',
@@ -78,6 +80,7 @@ const i18n = {
     adjustHeading: '画像調整',
     brightnessLabel: '明るさ:',
     saturationLabel: '彩度しきい値:',
+    contrastLabel: 'コントラスト:',
     zoomLabel: 'ズーム:',
     filterHeading: 'フィルター',
     filterNormal: 'ノーマル',
@@ -444,11 +447,13 @@ function drawLayers(targetCtx) {
 }
 
 function applyFilters() {
-  if (brightness === 0 && filter === 'none') return;
+  if (brightness === 0 && contrast === 0 && filter === 'none') return;
 
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
   const adj = (brightness / 100) * 255;
+  const cAdj = contrast * 2.55;
+  const factor = (259 * (cAdj + 255)) / (255 * (259 - cAdj));
 
   for (let i = 0; i < data.length; i += 4) {
     let r = data[i];
@@ -459,6 +464,11 @@ function applyFilters() {
       r += adj;
       g += adj;
       b += adj;
+    }
+    if (contrast !== 0) {
+      r = factor * (r - 128) + 128;
+      g = factor * (g - 128) + 128;
+      b = factor * (b - 128) + 128;
     }
 
     if (filter === 'grayscale') {
@@ -543,12 +553,14 @@ function saveBlob(blob, filename) {
 function resetEditor() {
   saveState();
   brightness = 0;
+  contrast = 0;
   filter = 'none';
   saturationThreshold = 50;
   layers.length = 0;
   selectedLayer = -1;
   cropRect = null;
   document.getElementById('brightness').value = 0;
+  document.getElementById('contrast').value = 0;
   document.getElementById('saturationThreshold').value = 50;
   document.querySelectorAll('#filter-buttons button').forEach(btn => btn.classList.remove('active'));
   const normalBtn = document.querySelector('#filter-buttons button[data-filter="none"]');
@@ -593,6 +605,11 @@ function cropCanvas() {
 function setBrightness(value) {
   saveState();
   brightness = parseInt(value, 10) || 0;
+  redraw();
+}
+function setContrast(value) {
+  saveState();
+  contrast = parseInt(value, 10) || 0;
   redraw();
 }
 function setFilter(value) {
@@ -775,8 +792,11 @@ function loadState(dataURL) {
     layers.push({type:'image', img:image, x:0, y:0, width:image.width, height:image.height, rotation:0, scaleX:1, scaleY:1, visible:true, mask:null});
     selectedLayer = 0;
     brightness = 0;
+    contrast = 0;
     filter = 'none';
     cropRect = null;
+    document.getElementById('brightness').value = 0;
+    document.getElementById('contrast').value = 0;
     redraw();
   };
   image.src = dataURL;
@@ -831,6 +851,8 @@ function processFile(file) {
 function applyFiltersToContext(ctx, imageData, w, h) {
   const data = imageData.data;
   const adj = (brightness / 100) * 255;
+  const cAdj = contrast * 2.55;
+  const factor = (259 * (cAdj + 255)) / (255 * (259 - cAdj));
   for (let i = 0; i < data.length; i += 4) {
     let r = data[i];
     let g = data[i + 1];
@@ -839,6 +861,11 @@ function applyFiltersToContext(ctx, imageData, w, h) {
       r += adj;
       g += adj;
       b += adj;
+    }
+    if (contrast !== 0) {
+      r = factor * (r - 128) + 128;
+      g = factor * (g - 128) + 128;
+      b = factor * (b - 128) + 128;
     }
     if (filter === 'grayscale') {
       const avg = (r + g + b) / 3;
