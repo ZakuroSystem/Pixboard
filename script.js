@@ -148,7 +148,11 @@ window.addEventListener('load', () => {
   }
   setInterval(() => {
     if (canvas.width && canvas.height) {
-      localStorage.setItem('pixboard-autosave', canvas.toDataURL());
+      try {
+        localStorage.setItem('pixboard-autosave', canvas.toDataURL());
+      } catch (e) {
+        console.error('Autosave failed', e);
+      }
     }
   }, 5000);
 });
@@ -202,6 +206,7 @@ document.getElementById('fileInput').addEventListener('change', event => {
 function addImageFromFile(file) {
   const url = URL.createObjectURL(file);
   const image = new Image();
+  image.crossOrigin = 'anonymous';
   image.onload = () => {
     const scale = Math.min(canvas.width / image.width, canvas.height / image.height, 1);
     const w = image.width * scale;
@@ -535,11 +540,19 @@ function resizeCanvas() {
 }
 
 function savePNG() {
-  canvas.toBlob(blob => saveBlob(blob, 'image.png'), 'image/png');
+  try {
+    canvas.toBlob(blob => saveBlob(blob, 'image.png'), 'image/png');
+  } catch (e) {
+    console.error('Failed to save PNG', e);
+  }
 }
 
 function saveJPG() {
-  canvas.toBlob(blob => saveBlob(blob, 'image.jpg'), 'image/jpeg');
+  try {
+    canvas.toBlob(blob => saveBlob(blob, 'image.jpg'), 'image/jpeg');
+  } catch (e) {
+    console.error('Failed to save JPG', e);
+  }
 }
 
 function saveBlob(blob, filename) {
@@ -586,6 +599,7 @@ function cropCanvas() {
   const url = temp.toDataURL();
 
   const image = new Image();
+  image.crossOrigin = 'anonymous';
   image.onload = () => {
     canvas.width = cropRect.w;
     canvas.height = cropRect.h;
@@ -656,6 +670,7 @@ function addTextLayer(x, y) {
 
 function addSticker(src) {
   const image = new Image();
+  image.crossOrigin = 'anonymous';
   image.onload = () => {
     layers.push({type:'sticker', img:image, x:0, y:0, width:image.width, height:image.height, rotation:0, scaleX:1, scaleY:1, visible:true, mask:null});
     selectedLayer = layers.length - 1;
@@ -670,6 +685,7 @@ function initStickers() {
   const container = document.getElementById('sticker-container');
   stickerPaths.forEach(path => {
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.src = path;
     img.className = 'w-12 h-12 cursor-pointer';
     img.addEventListener('click', () => addSticker(path));
@@ -769,7 +785,11 @@ function sendBackward() {
 
 function saveState() {
   if (undoStack.length >= MAX_HISTORY) undoStack.shift();
-  undoStack.push(canvas.toDataURL());
+  try {
+    undoStack.push(canvas.toDataURL());
+  } catch (e) {
+    console.error('Failed to save state', e);
+  }
   redoStack = [];
 }
 
@@ -781,6 +801,7 @@ function resetHistory() {
 
 function loadState(dataURL) {
   const image = new Image();
+  image.crossOrigin = 'anonymous';
   image.onload = () => {
     canvas.width = image.width;
     canvas.height = image.height;
@@ -804,14 +825,22 @@ function loadState(dataURL) {
 
 function undo() {
   if (undoStack.length === 0) return;
-  redoStack.push(canvas.toDataURL());
+  try {
+    redoStack.push(canvas.toDataURL());
+  } catch (e) {
+    console.error('Failed to capture redo state', e);
+  }
   const data = undoStack.pop();
   loadState(data);
 }
 
 function redo() {
   if (redoStack.length === 0) return;
-  undoStack.push(canvas.toDataURL());
+  try {
+    undoStack.push(canvas.toDataURL());
+  } catch (e) {
+    console.error('Failed to capture undo state', e);
+  }
   const data = redoStack.pop();
   loadState(data);
 }
@@ -828,6 +857,7 @@ async function batchProcess() {
 function processFile(file) {
   return new Promise(resolve => {
     const image = new Image();
+    image.crossOrigin = 'anonymous';
     const url = URL.createObjectURL(file);
     image.onload = () => {
       const off = document.createElement('canvas');
