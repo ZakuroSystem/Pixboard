@@ -60,8 +60,28 @@
       </div>
       <div class="flex items-center gap-2">
         <label data-i18n="saturationLabel">Saturation Threshold:</label>
-        <input type="range" id="saturationThreshold" min="0" max="255" value="50" oninput="setSaturationThreshold(this.value)">
+        <input type="range" id="saturationThreshold" min="0" max="100" value="50" oninput="setSaturationThreshold(this.value)">
       </div>
+        <div class="flex items-center gap-2">
+          <label data-i18n="saturationAdjLabel">Saturation:</label>
+          <input type="range" id="saturation" min="-100" max="100" value="0" oninput="setSaturation(this.value)">
+        </div>
+        <div class="flex items-center gap-2">
+          <label data-i18n="hueLabel">Hue:</label>
+          <input type="range" id="hue" min="-180" max="180" value="0" oninput="setHue(this.value)">
+        </div>
+        <div class="flex items-center gap-2">
+          <label data-i18n="sharpnessLabel">Sharpness:</label>
+          <input type="range" id="sharpness" min="0" max="5" step="0.1" value="0" oninput="setSharpness(this.value)">
+        </div>
+        <div class="flex items-center gap-2">
+          <label data-i18n="blurLabel">Blur:</label>
+          <input type="range" id="blur" min="0" max="10" step="0.5" value="0" oninput="setBlur(this.value)">
+        </div>
+        <div class="flex items-center gap-2">
+          <label data-i18n="invertLabel">Invert:</label>
+          <input type="checkbox" id="invert" onchange="setInvert(this.checked)">
+        </div>
       <div class="flex items-center gap-2">
         <label data-i18n="zoomLabel">Zoom:</label>
         <input type="range" id="zoom" min="50" max="200" value="100" oninput="setZoom(this.value)">

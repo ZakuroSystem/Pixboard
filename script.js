@@ -7,6 +7,11 @@ let contrast = 0;
 let filter = 'none';
 let saturationThreshold = 50;
 let draggingLayer = false;
+let saturationAdj = 0;
+let hueRotate = 0;
+let blurAmount = 0;
+let sharpnessAmount = 0;
+let invertColors = false;
 let cropping = false;
 let maskMode = false;
 let dragOffsetX = 0;
@@ -43,6 +48,11 @@ const i18n = {
     brightnessLabel: 'Brightness:',
     saturationLabel: 'Saturation Threshold:',
     contrastLabel: 'Contrast:',
+    saturationAdjLabel: "Saturation:",
+    hueLabel: "Hue:",
+    sharpnessLabel: "Sharpness:",
+    blurLabel: "Blur:",
+    invertLabel: "Invert:",
     zoomLabel: 'Zoom:',
     filterHeading: 'Filters',
     filterNormal: 'Normal',
@@ -81,6 +91,11 @@ const i18n = {
     brightnessLabel: '明るさ:',
     saturationLabel: '彩度しきい値:',
     contrastLabel: 'コントラスト:',
+    saturationAdjLabel: "彩度:",
+    hueLabel: "色相:",
+    sharpnessLabel: "シャープネス:",
+    blurLabel: "ぼかし:",
+    invertLabel: "反転:",
     zoomLabel: 'ズーム:',
     filterHeading: 'フィルター',
     filterNormal: 'ノーマル',
@@ -206,7 +221,6 @@ document.getElementById('fileInput').addEventListener('change', event => {
 function addImageFromFile(file) {
   const url = URL.createObjectURL(file);
   const image = new Image();
-  image.crossOrigin = 'anonymous';
   image.onload = () => {
     const scale = Math.min(canvas.width / image.width, canvas.height / image.height, 1);
     const w = image.width * scale;
@@ -452,7 +466,14 @@ function drawLayers(targetCtx) {
 }
 
 function applyFilters() {
-  if (brightness === 0 && contrast === 0 && filter === 'none') return;
+  if (brightness === 0 &&
+      contrast === 0 &&
+      saturationAdj === 0 &&
+      hueRotate === 0 &&
+      blurAmount === 0 &&
+      sharpnessAmount === 0 &&
+      !invertColors &&
+      filter === 'none') return;
 
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
@@ -476,6 +497,25 @@ function applyFilters() {
       b = factor * (b - 128) + 128;
     }
 
+    if (saturationAdj !== 0 || hueRotate !== 0) {
+      let [h, s, l] = rgbToHsl(r, g, b);
+      if (saturationAdj !== 0) {
+        s *= 1 + saturationAdj / 100;
+        s = Math.min(1, Math.max(0, s));
+      }
+      if (hueRotate !== 0) {
+        h = (h + hueRotate / 360) % 1;
+        if (h < 0) h += 1;
+      }
+      [r, g, b] = hslToRgb(h, s, l);
+    }
+
+    if (invertColors) {
+      r = 255 - r;
+      g = 255 - g;
+      b = 255 - b;
+    }
+
     if (filter === 'grayscale') {
       const avg = (r + g + b) / 3;
       r = g = b = avg;
@@ -489,7 +529,7 @@ function applyFilters() {
     } else if (filter === 'saturation-gray') {
       const maxVal = Math.max(r, g, b);
       const minVal = Math.min(r, g, b);
-      const sat = maxVal - minVal;
+      const sat = maxVal === 0 ? 0 : (maxVal - minVal) / maxVal * 100;
       if (sat <= saturationThreshold) {
         const avg = (r + g + b) / 3;
         r = g = b = avg;
@@ -500,6 +540,9 @@ function applyFilters() {
     data[i + 1] = Math.min(255, Math.max(0, g));
     data[i + 2] = Math.min(255, Math.max(0, b));
   }
+
+  if (blurAmount > 0) applyBlur(data, canvas.width, canvas.height, blurAmount);
+  if (sharpnessAmount > 0) applySharpen(data, canvas.width, canvas.height, sharpnessAmount);
 
   ctx.putImageData(imageData, 0, 0);
 }
@@ -599,7 +642,7 @@ function cropCanvas() {
   const url = temp.toDataURL();
 
   const image = new Image();
-  image.crossOrigin = 'anonymous';
+
   image.onload = () => {
     canvas.width = cropRect.w;
     canvas.height = cropRect.h;
@@ -646,6 +689,36 @@ function setZoom(value) {
   redraw();
 }
 
+function setSaturation(value) {
+  saveState();
+  saturationAdj = parseInt(value, 10) || 0;
+  redraw();
+}
+
+function setHue(value) {
+  saveState();
+  hueRotate = parseInt(value, 10) || 0;
+  redraw();
+}
+
+function setSharpness(value) {
+  saveState();
+  sharpnessAmount = parseFloat(value) || 0;
+  redraw();
+}
+
+function setBlur(value) {
+  saveState();
+  blurAmount = parseFloat(value) || 0;
+  redraw();
+}
+
+function setInvert(value) {
+  saveState();
+  invertColors = value;
+  redraw();
+}
+
 function enableTextMode() {
   isTextMode = true;
 }
@@ -670,7 +743,7 @@ function addTextLayer(x, y) {
 
 function addSticker(src) {
   const image = new Image();
-  image.crossOrigin = 'anonymous';
+
   image.onload = () => {
     layers.push({type:'sticker', img:image, x:0, y:0, width:image.width, height:image.height, rotation:0, scaleX:1, scaleY:1, visible:true, mask:null});
     selectedLayer = layers.length - 1;
@@ -801,7 +874,7 @@ function resetHistory() {
 
 function loadState(dataURL) {
   const image = new Image();
-  image.crossOrigin = 'anonymous';
+
   image.onload = () => {
     canvas.width = image.width;
     canvas.height = image.height;
@@ -857,7 +930,7 @@ async function batchProcess() {
 function processFile(file) {
   return new Promise(resolve => {
     const image = new Image();
-    image.crossOrigin = 'anonymous';
+  
     const url = URL.createObjectURL(file);
     image.onload = () => {
       const off = document.createElement('canvas');
@@ -897,6 +970,23 @@ function applyFiltersToContext(ctx, imageData, w, h) {
       g = factor * (g - 128) + 128;
       b = factor * (b - 128) + 128;
     }
+    if (saturationAdj !== 0 || hueRotate !== 0) {
+      let [hue, sat, lit] = rgbToHsl(r, g, b);
+      if (saturationAdj !== 0) {
+        sat *= 1 + saturationAdj / 100;
+        sat = Math.min(1, Math.max(0, sat));
+      }
+      if (hueRotate !== 0) {
+        hue = (hue + hueRotate / 360) % 1;
+        if (hue < 0) hue += 1;
+      }
+      [r, g, b] = hslToRgb(hue, sat, lit);
+    }
+    if (invertColors) {
+      r = 255 - r;
+      g = 255 - g;
+      b = 255 - b;
+    }
     if (filter === 'grayscale') {
       const avg = (r + g + b) / 3;
       r = g = b = avg;
@@ -910,15 +1000,110 @@ function applyFiltersToContext(ctx, imageData, w, h) {
     } else if (filter === 'saturation-gray') {
       const maxVal = Math.max(r, g, b);
       const minVal = Math.min(r, g, b);
-      const sat = maxVal - minVal;
+      const sat = maxVal === 0 ? 0 : (maxVal - minVal) / maxVal * 100;
       if (sat <= saturationThreshold) {
         const avg = (r + g + b) / 3;
         r = g = b = avg;
       }
     }
-    imageData.data[i] = Math.min(255, Math.max(0, r));
-    imageData.data[i + 1] = Math.min(255, Math.max(0, g));
-    imageData.data[i + 2] = Math.min(255, Math.max(0, b));
+    data[i] = Math.min(255, Math.max(0, r));
+    data[i + 1] = Math.min(255, Math.max(0, g));
+    data[i + 2] = Math.min(255, Math.max(0, b));
   }
+  if (blurAmount > 0) applyBlur(data, w, h, blurAmount);
+  if (sharpnessAmount > 0) applySharpen(data, w, h, sharpnessAmount);
   ctx.putImageData(imageData, 0, 0);
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return [h, s, l];
+}
+
+function hslToRgb(h, s, l) {
+  let r, g, b;
+  if (s === 0) {
+    r = g = b = l;
+  } else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+  return [r * 255, g * 255, b * 255];
+}
+
+function applyBlur(data, w, h, radius) {
+  const r = Math.round(radius);
+  if (r <= 0) return;
+  const copy = new Uint8ClampedArray(data);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let tr = 0, tg = 0, tb = 0, count = 0;
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+            const idx = (ny * w + nx) * 4;
+            tr += copy[idx];
+            tg += copy[idx+1];
+            tb += copy[idx+2];
+            count++;
+          }
+        }
+      }
+      const i = (y * w + x) * 4;
+      data[i] = tr / count;
+      data[i+1] = tg / count;
+      data[i+2] = tb / count;
+    }
+  }
+}
+
+function applySharpen(data, w, h, amount) {
+  if (amount <= 0) return;
+  const copy = new Uint8ClampedArray(data);
+  const center = 5 + parseFloat(amount);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = (y * w + x) * 4;
+      let r = center * copy[i];
+      let g = center * copy[i+1];
+      let b = center * copy[i+2];
+      const idxN = ((y-1)*w + x) * 4;
+      const idxS = ((y+1)*w + x) * 4;
+      const idxW = (y*w + (x-1)) * 4;
+      const idxE = (y*w + (x+1)) * 4;
+      r -= copy[idxN] + copy[idxS] + copy[idxW] + copy[idxE];
+      g -= copy[idxN+1] + copy[idxS+1] + copy[idxW+1] + copy[idxE+1];
+      b -= copy[idxN+2] + copy[idxS+2] + copy[idxW+2] + copy[idxE+2];
+      data[i] = Math.min(255, Math.max(0, r));
+      data[i+1] = Math.min(255, Math.max(0, g));
+      data[i+2] = Math.min(255, Math.max(0, b));
+    }
+  }
 }
