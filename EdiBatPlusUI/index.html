@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>画像一括編集（タイル & 高速プレビュー）</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="row">
+      <h1>画像一括編集</h1>
+      <div class="spacer"></div>
+      <button id="openDir" class="btn primary">フォルダを開く（./pictures 推奨）</button>
+      <button id="openDirFallback" class="btn ghost">フォルダ選択（互換）</button>
+      <input id="dirInput" type="file" webkitdirectory multiple hidden />
+      <button id="addFiles" class="btn">個別ファイルを追加</button>
+      <input id="fileInput" type="file" accept="image/*" multiple hidden />
+      <button id="exportAll" class="btn success">エクスポート</button>
+      <div class="spacer"></div>
+      <span class="chip" id="countChip">0 枚</span>
+      <span class="chip" id="selChip">選択 0</span>
+    </div>
+    <div class="row gap">
+      <div class="seg" role="tablist" aria-label="表示モード">
+        <button id="modeTile" class="segbtn active" role="tab" aria-selected="true">タイル一括編集</button>
+        <button id="modeSingle" class="segbtn" role="tab" aria-selected="false">一括単品編集</button>
+      </div>
+      
+      <div class="seg" role="tablist" aria-label="適用対象">
+        <button id="scopeAuto" class="segbtn active" role="tab" aria-selected="true" title="選択があれば選択、なければ全体">自動</button>
+        <button id="scopeSel" class="segbtn" role="tab" aria-selected="false" title="選択のみ">選択</button>
+        <button id="scopeAll" class="segbtn" role="tab" aria-selected="false" title="全体">全体</button>
+        <button id="scopeExceptSel" class="segbtn" role="tab" aria-selected="false" title="選択以外">非選択</button>
+      </div>
+      <div class="seg" role="tablist" aria-label="ファイル名モード">
+        <button id="nameSimple" class="segbtn active" role="tab" aria-selected="true">_edited</button>
+        <button id="nameDetail" class="segbtn" role="tab" aria-selected="false">編集内容</button>
+      </div>
+      <div class="seg" role="tablist" aria-label="タイル密度">
+        <button id="tightTiles" class="segbtn active" role="tab" aria-selected="true" title="余白3px・最大表示">最大タイル</button>
+      </div>
+    </div>
+
+    <div id="controls" class="controls">
+      <!-- 色温度 -->
+      <div class="ctrl" data-key="temp" data-step="5" data-reset="0">
+        <label>色温度（寒色 ← 0 → 暖色）<span class="val" id="tempVal">0</span></label>
+        <div class="row">
+          <button class="mini minus">-1</button>
+          <input id="tempRange" type="range" min="-100" max="100" value="0" step="1" />
+          <button class="mini plus">+1</button>
+          <button class="mini reset">規定値</button>
+        </div>
+      </div>
+      <!-- 明るさ -->
+      <div class="ctrl" data-key="brightnessPct" data-step="5" data-reset="100">
+        <label>明るさ（%）<span class="val" id="brightVal">100%</span></label>
+        <div class="row">
+          <button class="mini minus">-1</button>
+          <input id="brightRange" type="range" min="0" max="200" value="100" step="1" />
+          <button class="mini plus">+1</button>
+          <button class="mini reset">規定値</button>
+        </div>
+      </div>
+      <!-- 露光（EV） -->
+      <div class="ctrl" data-key="ev" data-step="0.1" data-reset="0">
+        <label>露光（EV）<span class="val" id="expoVal">0.0</span></label>
+        <div class="row">
+          <button class="mini minus">-1</button>
+          <input id="expoRange" type="range" min="-4" max="4" value="0" step="0.1" />
+          <button class="mini plus">+1</button>
+          <button class="mini reset">規定値</button>
+        </div>
+      </div>
+      <!-- コントラスト -->
+      <div class="ctrl" data-key="contrastPct" data-step="5" data-reset="100">
+        <label>コントラスト（%）<span class="val" id="contVal">100%</span></label>
+        <div class="row">
+          <button class="mini minus">-1</button>
+          <input id="contRange" type="range" min="0" max="200" value="100" step="1" />
+          <button class="mini plus">+1</button>
+          <button class="mini reset">規定値</button>
+        </div>
+      </div>
+      <!-- ガンマ -->
+      <div class="ctrl" data-key="gamma" data-step="0.1" data-reset="1.0">
+        <label>ガンマ（γ）<span class="val" id="gammaVal">1.00</span></label>
+        <div class="row">
+          <button class="mini minus">-1</button>
+          <input id="gammaRange" type="range" min="0.10" max="3.00" value="1.00" step="0.01" />
+          <button class="mini plus">+1</button>
+          <button class="mini reset">規定値</button>
+        </div>
+      </div>
+      <!-- 彩度 -->
+      <div class="ctrl" data-key="saturationPct" data-step="5" data-reset="100">
+        <label>彩度（%）<span class="val" id="satVal">100%</span></label>
+        <div class="row">
+          <button class="mini minus">-1</button>
+          <input id="satRange" type="range" min="0" max="200" value="100" step="1" />
+          <button class="mini plus">+1</button>
+          <button class="mini reset">規定値</button>
+        </div>
+      </div>
+
+      <!-- 自動明るさ -->
+      <div class="ctrl auto" data-key="auto" data-step="0.05" data-reset="0">
+        <label>自動明るさ（平均±指定・強さ）<span class="val" id="autoVal">OFF</span></label>
+        <div class="row">
+          <input id="autoEnable" type="checkbox" />
+          <span class="muted">有効</span>
+          <span class="muted">Pivotオフセット</span>
+          <input id="autoPivot" type="range" min="-0.30" max="0.30" value="0" step="0.01" />
+          <span class="muted">強さ</span>
+          <input id="autoStrength" type="range" min="0" max="2" value="1" step="0.05" />
+          <button id="autoRecalc" class="mini">再計算</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row gap">
+      <div class="seg" role="tablist" aria-label="表示モード">
+        <button id="modeTile" class="segbtn active" role="tab" aria-selected="true">タイル一括編集</button>
+        <button id="modeSingle" class="segbtn" role="tab" aria-selected="false">一括単品編集</button>
+      </div>
+      
+      <button id="selectAll" class="btn ghost">全選択</button>
+      <button id="clearSel" class="btn ghost">選択クリア</button>
+      <span class="muted">クリック＝トグル、Shift+Click＝範囲選択。選択は太枠で表示。</span>
+    </div>
+  </header>
+
+  <main id="grid" class="grid tight" aria-live="polite"></main>
+
+  <section id="split" class="split" aria-live="polite">
+    <div class="leftPanel">
+      <div id="thumbGrid" class="leftGrid"></div>
+    </div>
+    <div class="rightPanel">
+      <div class="detailHeader">
+        <span class="chip">単品編集中</span>
+        <span id="detailName" class="detailName"></span>
+      </div>
+      <div class="detailCanvasWrap">
+        <canvas id="detailCanvas"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="editor.js"></script>
+  <script type="module" src="inout.js"></script>
+  <script type="module" src="draw.js"></script>
+</body>
+</html>

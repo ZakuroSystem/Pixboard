@@ -1,0 +1,98 @@
+/* ===== 基本レイアウト（近未来・角ばり基調） ===== */
+:root{
+  --bg:#0a0c12; --panel:#0f1320; --text:#e8eefc; --muted:#8f9bb8; --accent:#7ab3ff;
+  --line:#2a3350; --ok:#2fd07f; --warn:#ffba4a; --danger:#ff6a6a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:linear-gradient(180deg,#0a0c12 0%, #0b0e16 60%, #0a0c12 100%);
+  color:var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+}
+.top{
+  position:sticky; top:0; z-index:10; backdrop-filter: blur(8px);
+  background:rgba(10,12,18,0.88);
+  border-bottom:1px solid var(--line); padding:10px 12px;
+}
+.row{display:flex; align-items:center; gap:10px}
+.row.gap{margin-top:8px}
+.spacer{flex:1}
+h1{margin:0; font-size:18px; letter-spacing:.02em; font-weight:800}
+
+.btn{
+  display:inline-flex; gap:8px; align-items:center; cursor:pointer; user-select:none;
+  background:linear-gradient(180deg,#121829,#0f1524); border:1px solid var(--line); color:var(--text);
+  padding:8px 12px; border-radius:6px; font-weight:800; font-size:13px; letter-spacing:.01em;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+.btn:hover{border-color:#3a4c7d}
+.btn.ghost{background:#0c1222}
+.btn.primary{background:linear-gradient(180deg,#1a2642,#121a33); border-color:#35518a}
+.btn.success{background:linear-gradient(180deg,#143023,#0f251b); border-color:#1f6a45}
+
+.chip{padding:3px 8px; border:1px solid var(--line); border-radius:6px; font-size:12px; color:var(--muted); background:#0b1020}
+.muted{font-size:12px; color:var(--muted)}
+
+.seg{display:inline-grid; grid-auto-flow:column; gap:6px; padding:4px; border:1px solid var(--line); border-radius:6px; background:#0c1222}
+.segbtn{background:transparent; border:0; color:var(--muted); padding:6px 10px; border-radius:4px; cursor:pointer; font-weight:800; font-size:12px}
+.segbtn.active{color:#fff; background:#141c32; border:1px solid var(--line)}
+
+/* ===== コントロール ===== */
+.controls{
+  display:grid; gap:10px; grid-template-columns: repeat(3, minmax(240px, 1fr));
+  background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; margin-top:10px;
+}
+.ctrl{background:linear-gradient(180deg,#11172a,#0f1526); border:1px solid var(--line); border-radius:6px; padding:10px}
+.ctrl label{display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin-bottom:8px; font-weight:700}
+.ctrl .row{gap:8px}
+.ctrl input[type="range"]{flex:1}
+.mini{padding:4px 8px; font-size:12px; border-radius:4px; border:1px solid var(--line); background:#0d1326; color:#dbe6ff; cursor:pointer; font-weight:800}
+.mini:hover{border-color:#3a4c7d}
+
+@media (max-width:980px){ .controls{grid-template-columns: 1fr 1fr} }
+@media (max-width:640px){ .controls{grid-template-columns: 1fr} }
+
+/* ===== タイルグリッド（情報非表示／比較・保存なし） ===== */
+.grid{
+  display:grid; grid-template-columns: repeat(4, 1fr); /* 8枚以下デフォルトは4列 */
+  gap:12px; padding:12px;
+}
+.grid.tight{gap:3px; padding:3px} /* 最大タイルモード：余白3px */
+
+.tile{
+  position:relative; background:#0b0f1c; border:2px solid #0b0f1c; border-radius:6px; overflow:hidden;
+  display:grid; place-items:center; aspect-ratio:1/1;
+}
+/* 選択は+1px太い枠（元4px→5px） */
+.tile.selected{ border:5px solid #7ab3ff; }
+
+.canvas{ width:100%; height:100%; display:block; object-fit:contain; }
+
+/* 9枚以上は5列（1/5横幅ルール） */
+.grid.cols5{ grid-template-columns: repeat(5, 1fr); }
+
+.badge{
+  position:absolute; top:6px; left:6px; padding:3px 8px; border-radius:4px;
+  font-size:11px; font-weight:900; background:rgba(8,12,24,.55); color:#cfe3ff; border:1px solid rgba(255,255,255,.12);
+}
+
+/* ===== スプリットモード（単品編集） ===== */
+.split{display:none; grid-template-columns: minmax(260px, 42%) 1fr; gap:12px; padding:12px}
+.split.show{display:grid}
+.leftPanel{
+  border:1px solid var(--line); background:#0d1120; border-radius:6px; padding:8px; overflow:auto; max-height:calc(100vh - 190px);
+}
+.leftGrid{display:grid; grid-template-columns: repeat(4, 1fr); gap:8px}
+.thumb{
+  position:relative; border:2px solid #0b0f1c; background:#0b0f1c; border-radius:6px; aspect-ratio:1/1; display:grid; place-items:center; cursor:pointer;
+}
+.thumb.selected{border:4px solid #7ab3ff}
+.thumb canvas{width:100%; height:100%; object-fit:contain; display:block}
+
+.rightPanel{
+  border:1px solid var(--line); background:#0d1120; border-radius:6px; padding:8px; display:grid; grid-template-rows: auto 1fr;
+}
+.detailHeader{display:flex; align-items:center; gap:8px; padding:6px 8px; border-bottom:1px solid var(--line)}
+.detailName{font-size:12px; color:var(--muted)}
+.detailCanvasWrap{display:grid; place-items:center; padding:8px; height:calc(100vh - 230px)}
+#detailCanvas{max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; background:#0b0f1c; border:1px solid #0e1430}
