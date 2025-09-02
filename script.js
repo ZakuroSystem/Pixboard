@@ -1475,11 +1475,12 @@ Draw = (()=>{
     return (cnt >= 9) ? 5 : 4; // 9枚以上→5列, それ以下→4列
   }
   function computeTileRenderSize(){
-    const vw = Math.max(320, window.innerWidth);
+    const gw = grid.clientWidth || window.innerWidth;
     const cols = columnsForCount(App.items.length || 1);
-    const gapX = grid.classList.contains('tight') ? 3 : 12;
-    const paddingX = grid.classList.contains('tight') ? 6 : 24;
-    const w = Math.floor((vw - paddingX - gapX*(cols-1)) / cols);
+    const styles = getComputedStyle(grid);
+    const gapX = parseInt(styles.columnGap, 10) || 0;
+    const paddingX = (parseInt(styles.paddingLeft,10)||0) + (parseInt(styles.paddingRight,10)||0);
+    const w = Math.floor((gw - paddingX - gapX*(cols-1)) / cols);
     return Math.max(64, w);
   }
 
@@ -1502,6 +1503,8 @@ Draw = (()=>{
   function mountTile(item){
     const tile = document.createElement('div');
     tile.className = 'tile';
+    const size = computeTileRenderSize();
+    tile.style.width = tile.style.height = size + 'px';
     const badge = document.createElement('div');
     badge.className = 'badge';
     badge.textContent = '未選択';
@@ -1581,7 +1584,7 @@ Draw = (()=>{
   }
 
   function refreshAll(){
-    applyGridClass();
+    refreshLayout();
     if (App.mode === 'tile'){
       for (const it of App.items){ redrawPreview(it); }
     } else {
@@ -1592,6 +1595,10 @@ Draw = (()=>{
 
   function refreshLayout(){
     applyGridClass();
+    const size = computeTileRenderSize();
+    grid.querySelectorAll('.tile').forEach(t => {
+      t.style.width = t.style.height = size + 'px';
+    });
   }
 
   // ===== フルサイズ描画（保存用） =====

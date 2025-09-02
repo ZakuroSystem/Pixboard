@@ -128,16 +128,16 @@
   <section id="batchContainer" class="hidden">
     <header class="top">
       <div class="row">
-        <button class="btn" onclick="closeBatchEditor()">Back to Pixboard</button>
+        <button class="btn sm" onclick="closeBatchEditor()">Back to Pixboard</button>
         <h1>画像一括編集</h1>
         <div class="spacer"></div>
-        <button id="openDir" class="btn primary">フォルダを開く（./pictures 推奨）</button>
-        <button id="openDirFallback" class="btn ghost">フォルダ選択（互換）</button>
+        <button id="openDir" class="btn sm primary">フォルダを開く（./pictures 推奨）</button>
+        <button id="openDirFallback" class="btn sm ghost">フォルダ選択（互換）</button>
         <input id="dirInput" type="file" webkitdirectory multiple hidden />
-        <button id="addFiles" class="btn">個別ファイルを追加</button>
+        <button id="addFiles" class="btn sm">個別ファイルを追加</button>
         <input id="fileInput" type="file" accept="image/*" multiple hidden />
-        <button id="exportAll" class="btn success">エクスポート</button>
-        <button id="toggleControlsBtn" class="btn ghost" onclick="toggleBatchControls()" data-i18n="toggleControls">Controls</button>
+        <button id="exportAll" class="btn sm success">エクスポート</button>
+        <button id="toggleControlsBtn" class="btn sm ghost" onclick="toggleBatchControls()" data-i18n="toggleControls">Controls</button>
         <div class="spacer"></div>
         <span class="chip" id="countChip">0 枚</span>
         <span class="chip" id="selChip">選択 0</span>
