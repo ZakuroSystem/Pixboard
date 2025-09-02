@@ -918,8 +918,35 @@ function redo() {
   loadState(data);
 }
 
+let batchLoaded = false;
 function openBatchEditor() {
-  window.open('EdiBatPlusUI/index.html', '_blank');
+  const single = document.getElementById('singleEditor');
+  const container = document.getElementById('batchContainer');
+  if (!batchLoaded) {
+    fetch('EdiBatPlusUI/index.html')
+      .then(r => r.text())
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        container.innerHTML = '';
+        doc.body.childNodes.forEach(n => container.appendChild(n));
+        const backBtn = document.createElement('button');
+        backBtn.textContent = 'Back to Pixboard';
+        backBtn.className = 'btn';
+        backBtn.onclick = closeBatchEditor;
+        const row = container.querySelector('.top .row');
+        if (row) row.prepend(backBtn);
+        import('./EdiBatPlusUI/draw.js');
+        batchLoaded = true;
+      });
+  }
+  single.style.display = 'none';
+  container.classList.remove('hidden');
+}
+
+function closeBatchEditor() {
+  document.getElementById('batchContainer').classList.add('hidden');
+  document.getElementById('singleEditor').style.display = 'flex';
 }
 
 async function batchProcess() {

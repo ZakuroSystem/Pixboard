@@ -4,28 +4,24 @@
   <meta charset="UTF-8">
   <title>Pixboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css">
-  <style>
-    #canvas {
-      width: 80vh;
-      height: 80vh;
-      touch-action: none;
-    }
-  </style>
-</head>
+<link rel="stylesheet" href="EdiBatPlusUI/style.css">
+<link rel="stylesheet" href="style.css">
+  </head>
 <body class="h-screen flex flex-col">
-  <header class="p-2 flex justify-between items-center">
-    <h1 class="text-xl font-bold" data-i18n="title">Pixboard</h1>
-    <div class="flex items-center gap-2">
-      <input type="file" id="fileInput" accept="image/*" multiple class="border p-1">
-      <select id="langSelect" class="border p-1">
+  <header class="top">
+    <div class="row">
+      <h1 data-i18n="title">Pixboard</h1>
+      <div class="spacer"></div>
+      <input type="file" id="fileInput" accept="image/*" multiple>
+      <select id="langSelect">
         <option value="en">English</option>
         <option value="ja">日本語</option>
       </select>
+      <button class="btn" onclick="openBatchEditor()" data-i18n="batchBtn">Batch Process</button>
     </div>
   </header>
 
-  <main class="flex flex-1 overflow-hidden">
+  <main id="singleEditor" class="flex flex-1 overflow-hidden">
     <aside class="sidebar w-44 p-2 overflow-y-auto space-y-2">
       <div class="space-y-2">
         <button class="btn" onclick="rotate(-90)" data-i18n="rotateLeft">Rotate -90°</button>
@@ -101,7 +97,6 @@
         <input type="number" id="textSize" value="20" class="w-16">
         <button class="btn" onclick="enableTextMode()" data-i18n="addTextBtn">Add Text</button>
         <button class="btn" onclick="enableMaskMode()" data-i18n="maskModeBtn">Mask Mode</button>
-        <button class="btn" onclick="openBatchEditor()" data-i18n="batchBtn">Batch Process</button>
       </div>
 
       <h3 class="font-semibold" data-i18n="stickerHeading">Stickers</h3>
@@ -117,6 +112,8 @@
       </div>
     </aside>
   </main>
+
+  <section id="batchContainer" class="hidden"></section>
 
   <footer class="p-2 flex justify-center gap-2">
     <button class="btn" onclick="cropCanvas()" data-i18n="cropBtn">トリミング</button>
