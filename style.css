@@ -59,6 +59,14 @@ h1{margin:0; font-size:18px; letter-spacing:.02em; font-weight:800}
 }
 .grid.tight{gap:3px; padding:3px} /* 最大タイルモード：余白3px */
 
+#pickedColor {
+  display: inline-block;
+  padding: 0 4px;
+  border: 1px solid #000;
+  min-width: 60px;
+  text-align: center;
+}
+
 .tile{
   position:relative; background:#0b0f1c; border:2px solid #0b0f1c; border-radius:6px; overflow:hidden;
   display:grid; place-items:center; aspect-ratio:1/1;

@@ -29,6 +29,8 @@ let isTextMode = false;
 let undoStack = [];
 let redoStack = [];
 const MAX_HISTORY = 20;
+let colorPicking = false;
+const distortWorker = new Worker('distortWorker.js');
 
 let currentLang = 'en';
 const i18n = {
@@ -73,7 +75,11 @@ const i18n = {
     savePngBtn: 'Save PNG',
     saveJpgBtn: 'Save JPG',
     resetBtn: 'Reset',
-    restoreConfirm: 'Restore previous session?'
+    restoreConfirm: 'Restore previous session?',
+    colorPickerBtn: 'Color Picker',
+    pickedColorLabel: 'Color:',
+    distortLabel: 'Distortion:',
+    distortBtn: 'Apply Distortion'
   },
   ja: {
     title: 'ピックスボード',
@@ -116,7 +122,11 @@ const i18n = {
     savePngBtn: 'PNG保存',
     saveJpgBtn: 'JPG保存',
     resetBtn: '全てリセット',
-    restoreConfirm: '前回の編集を復元しますか?'
+    restoreConfirm: '前回の編集を復元しますか?',
+    colorPickerBtn: 'スポイト',
+    pickedColorLabel: '色:',
+    distortLabel: '歪み:',
+    distortBtn: '歪み適用'
   }
 };
 
@@ -216,6 +226,34 @@ document.getElementById('singleFileInput').addEventListener('change', event => {
   if (batchFiles.length === 0) return;
   for (const file of batchFiles) addImageFromFile(file);
 });
+
+document.getElementById('colorPickerBtn').addEventListener('click', () => {
+  colorPicking = !colorPicking;
+});
+
+canvas.addEventListener('click', e => {
+  if (!colorPicking) return;
+  const { x, y } = getCanvasCoords(e);
+  const pixel = ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
+  const hex = '#' + [pixel[0], pixel[1], pixel[2]].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+  const el = document.getElementById('pickedColor');
+  el.textContent = hex;
+  el.style.background = hex;
+  const brightness = (pixel[0] + pixel[1] + pixel[2]) / 3;
+  el.style.color = brightness > 127 ? '#000' : '#FFF';
+  colorPicking = false;
+});
+
+document.getElementById('distortBtn').addEventListener('click', () => {
+  const amount = parseFloat(document.getElementById('distortAmount').value);
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  distortWorker.postMessage({ imageData: imgData, amount });
+});
+
+distortWorker.onmessage = e => {
+  ctx.putImageData(e.data, 0, 0);
+  saveState();
+};
 
 function addImageFromFile(file) {
   const url = URL.createObjectURL(file);
