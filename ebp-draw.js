@@ -1,6 +1,6 @@
 // draw.js - 画面描画・選択・モード・単品編集プレビュー
-import { Editor } from './editor.js';
-import { IO } from './inout.js';
+import { Editor } from './ebp-editor.js';
+import { IO } from './ebp-inout.js';
 
 export const Draw = (()=>{
   const App = IO.App;

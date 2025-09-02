@@ -1,6 +1,6 @@
 // inout.js - 入出力・ZIP生成・ファイル命名
-import { Editor } from './editor.js';
-import { Draw } from './draw.js';
+import { Editor } from './ebp-editor.js';
+import { Draw } from './ebp-draw.js';
 
 export const IO = (()=>{
   const isImageName = (name)=> /\.(png|jpe?g|webp|gif|bmp|tiff?)$/i.test(name);

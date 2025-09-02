@@ -212,7 +212,7 @@ function adjustCanvas() {
   redraw();
 }
 
-document.getElementById('fileInput').addEventListener('change', event => {
+document.getElementById('singleFileInput').addEventListener('change', event => {
   batchFiles = Array.from(event.target.files);
   if (batchFiles.length === 0) return;
   for (const file of batchFiles) addImageFromFile(file);
@@ -918,30 +918,9 @@ function redo() {
   loadState(data);
 }
 
-let batchLoaded = false;
 function openBatchEditor() {
-  const single = document.getElementById('singleEditor');
-  const container = document.getElementById('batchContainer');
-  if (!batchLoaded) {
-    fetch('EdiBatPlusUI/index.html')
-      .then(r => r.text())
-      .then(html => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        container.innerHTML = '';
-        doc.body.childNodes.forEach(n => container.appendChild(n));
-        const backBtn = document.createElement('button');
-        backBtn.textContent = 'Back to Pixboard';
-        backBtn.className = 'btn';
-        backBtn.onclick = closeBatchEditor;
-        const row = container.querySelector('.top .row');
-        if (row) row.prepend(backBtn);
-        import('./EdiBatPlusUI/draw.js');
-        batchLoaded = true;
-      });
-  }
-  single.style.display = 'none';
-  container.classList.remove('hidden');
+  document.getElementById('singleEditor').style.display = 'none';
+  document.getElementById('batchContainer').classList.remove('hidden');
 }
 
 function closeBatchEditor() {

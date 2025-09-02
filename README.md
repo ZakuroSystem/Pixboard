@@ -16,7 +16,7 @@ Pixboard is a lightweight image editor that runs entirely in your browser. All p
 - Mask mode for layer clipping
 - Zoom in/out with mouse wheel or pinch
 - Adjust brightness
-- Advanced batch editing with integrated EdiBatPlus UI
+- Advanced batch editing with integrated EdiBatPlus UI (no separate folder)
 
 ### Pixboard の強み
 
@@ -29,4 +29,4 @@ Pixboard is a lightweight image editor that runs entirely in your browser. All p
 - Cropping tool
 - Undo / redo
 
-Open `index.html` in a browser to start editing. The **Batch Process** button now toggles the embedded EdiBatPlus batch editor, and a **Back to Pixboard** button returns to the single-image editor.
+Open `index.html` in a browser to start editing. The **Batch Process** button toggles the built-in EdiBatPlus batch editor, and a **Back to Pixboard** button returns to the single-image editor.
