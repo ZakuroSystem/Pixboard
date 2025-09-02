@@ -30,7 +30,7 @@ let undoStack = [];
 let redoStack = [];
 const MAX_HISTORY = 20;
 let colorPicking = false;
-  const distortWorker = new Worker('distortWorker.js');
+const distortWorker = new Worker('distortWorker.js');
 let autosaveTimer = null;
 
 function fitPreviewSize(img, max){
@@ -239,13 +239,21 @@ function adjustCanvas() {
 }
 
 document.getElementById('singleFileInput').addEventListener('change', event => {
-  batchFiles = Array.from(event.target.files);
-  if (batchFiles.length === 0) return;
-  for (const file of batchFiles) addImageFromFile(file);
+  const files = Array.from(event.target.files);
+  if (files.length === 0) return;
+  for (const file of files) addImageFromFile(file);
 });
 
 document.getElementById('colorPickerBtn').addEventListener('click', () => {
   colorPicking = !colorPicking;
+  canvas.style.cursor = colorPicking ? 'crosshair' : '';
+});
+
+document.addEventListener('keydown', e => {
+  if (colorPicking && e.key === 'Escape') {
+    colorPicking = false;
+    canvas.style.cursor = '';
+  }
 });
 
 canvas.addEventListener('click', e => {
@@ -259,6 +267,7 @@ canvas.addEventListener('click', e => {
   const brightness = (pixel[0] + pixel[1] + pixel[2]) / 3;
   el.style.color = brightness > 127 ? '#000' : '#FFF';
   colorPicking = false;
+  canvas.style.cursor = '';
 });
 
 document.getElementById('distortBtn').addEventListener('click', () => {

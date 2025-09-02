@@ -28,10 +28,6 @@ Pixboard is a lightweight image editor that runs entirely in your browser. All p
 - 無料でインストール不要
 - すぐに使えるシンプルなUI
 
-## Coming Soon
-
-- Cropping tool
-- Undo / redo
 ## Running
 
 Install Flask and start a local server:
