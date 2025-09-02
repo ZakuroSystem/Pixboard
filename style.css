@@ -121,6 +121,8 @@ main.editor, #singleEditor {
   background: #0b0f1c;
   border: 1px solid var(--line);
   touch-action: none;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 footer {
@@ -133,4 +135,19 @@ footer {
 
 .hidden {
   display: none;
+}
+
+#batchContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#batchContainer > header {
+  flex: 0 0 auto;
+}
+
+#grid, #split {
+  flex: 1 1 auto;
+  overflow: auto;
 }

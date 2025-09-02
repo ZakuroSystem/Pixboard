@@ -20,6 +20,7 @@ Pixboard is a lightweight image editor that runs entirely in your browser. All p
 - Color picker shows exact RGB hex values
 - Distortion tool with adjustable strength
 - Multi-threaded image processing for faster edits
+- Toggle sidebars and batch controls to maximize preview area
 
 ### Pixboard の強み
 

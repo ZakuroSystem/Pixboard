@@ -89,7 +89,9 @@ const i18n = {
     colorPickerBtn: 'Color Picker',
     pickedColorLabel: 'Color:',
     distortLabel: 'Distortion:',
-    distortBtn: 'Apply Distortion'
+    distortBtn: 'Apply Distortion',
+    toggleUI: 'Toggle UI',
+    toggleControls: 'Toggle Controls'
   },
   ja: {
     title: 'ピックスボード',
@@ -136,7 +138,9 @@ const i18n = {
     colorPickerBtn: 'スポイト',
     pickedColorLabel: '色:',
     distortLabel: '歪み:',
-    distortBtn: '歪み適用'
+    distortBtn: '歪み適用',
+    toggleUI: 'UI切替',
+    toggleControls: '操作パネル切替'
   }
 };
 
@@ -985,6 +989,21 @@ function closeBatchEditor() {
   document.getElementById('batchContainer').classList.add('hidden');
   document.getElementById('singleEditor').style.display = 'flex';
   document.getElementById('mainHeader').style.display = '';
+}
+
+function toggleSidebars() {
+  document.getElementById('leftSidebar').classList.toggle('hidden');
+  document.getElementById('rightSidebar').classList.toggle('hidden');
+  adjustCanvas();
+}
+
+function toggleBatchControls() {
+  const controls = document.getElementById('controls');
+  controls.classList.toggle('hidden');
+  if (typeof Draw !== 'undefined') {
+    Draw.refreshLayout();
+    Draw.refreshAll();
+  }
 }
 
 function rgbToHsl(r, g, b) {

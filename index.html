@@ -17,11 +17,12 @@
         <option value="ja">日本語</option>
       </select>
       <button class="btn" onclick="openBatchEditor()" data-i18n="batchBtn">Batch Process</button>
+      <button class="btn" onclick="toggleSidebars()" data-i18n="toggleUI">Toggle UI</button>
     </div>
   </header>
 
   <main id="singleEditor" class="flex flex-1 overflow-hidden">
-    <aside class="sidebar w-44 p-2 overflow-y-auto space-y-2">
+    <aside id="leftSidebar" class="sidebar w-44 p-2 overflow-y-auto space-y-2">
       <div class="space-y-2">
         <button class="btn" onclick="rotate(-90)" data-i18n="rotateLeft">Rotate -90°</button>
         <button class="btn" onclick="rotate(90)" data-i18n="rotateRight">Rotate +90°</button>
@@ -43,7 +44,7 @@
       <canvas id="canvas" class="my-2"></canvas>
     </section>
 
-    <aside class="sidebar w-64 p-2 overflow-y-auto space-y-2">
+    <aside id="rightSidebar" class="sidebar w-64 p-2 overflow-y-auto space-y-2">
       <h3 class="font-semibold" data-i18n="adjustHeading">画像調整</h3>
       <div class="flex items-center gap-2">
         <label data-i18n="brightnessLabel">Brightness:</label>
@@ -136,6 +137,7 @@
         <button id="addFiles" class="btn">個別ファイルを追加</button>
         <input id="fileInput" type="file" accept="image/*" multiple hidden />
         <button id="exportAll" class="btn success">エクスポート</button>
+        <button id="toggleControlsBtn" class="btn ghost" onclick="toggleBatchControls()" data-i18n="toggleControls">Controls</button>
         <div class="spacer"></div>
         <span class="chip" id="countChip">0 枚</span>
         <span class="chip" id="selChip">選択 0</span>
@@ -161,7 +163,7 @@
         </div>
       </div>
 
-      <div id="controls" class="controls">
+      <div id="controls" class="controls hidden">
         <div class="ctrl" data-key="temp" data-step="5" data-reset="0">
           <label>色温度（寒色 ← 0 → 暖色）<span class="val" id="tempVal">0</span></label>
           <div class="row">
