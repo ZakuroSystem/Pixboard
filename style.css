@@ -54,10 +54,14 @@ h1{margin:0; font-size:18px; letter-spacing:.02em; font-weight:800}
 
 /* ===== タイルグリッド（情報非表示／比較・保存なし） ===== */
 .grid{
-  display:grid; grid-template-columns: repeat(4, 1fr); /* 8枚以下デフォルトは4列 */
-  gap:12px; padding:12px;
+  display:grid;
+  grid-template-columns: repeat(4, 1fr); /* 8枚以下デフォルトは4列 */
+  row-gap:5px;
+  column-gap:3px;
+  padding:5px 3px;
+  background:var(--bg);
 }
-.grid.tight{row-gap:5px; column-gap:3px; padding:5px 3px} /* 最大タイルモード：上下5px・左右3px余白 */
+.grid.tight{row-gap:5px; column-gap:3px; padding:5px 3px}
 
 #pickedColor {
   display: inline-block;
@@ -68,10 +72,13 @@ h1{margin:0; font-size:18px; letter-spacing:.02em; font-weight:800}
 }
 
 .tile{
-  position:relative; background:#0b0f1c; border:2px solid #0b0f1c; border-radius:6px; overflow:hidden;
-  display:grid; place-items:center; aspect-ratio:1/1;
+  position:relative;
+  display:grid;
+  place-items:center;
+  aspect-ratio:1/1;
+  overflow:hidden;
 }
-.tile.selected{ border:5px solid #7ab3ff; }
+.tile.selected{ outline:3px solid #7ab3ff; }
 
 .canvas{ width:100%; height:100%; display:block; object-fit:contain; }
 

@@ -31,6 +31,7 @@ let redoStack = [];
 const MAX_HISTORY = 20;
 let colorPicking = false;
   const distortWorker = new Worker('distortWorker.js');
+let autosaveTimer = null;
 
 function fitPreviewSize(img, max){
   const w = img.naturalWidth || img.width;
@@ -184,12 +185,14 @@ window.addEventListener('load', () => {
   if (saved && confirm(i18n[currentLang].restoreConfirm)) {
     loadState(saved);
   }
-  setInterval(() => {
+  autosaveTimer = setInterval(() => {
     if (canvas.width && canvas.height) {
       try {
-        localStorage.setItem('pixboard-autosave', canvas.toDataURL());
+        const data = canvas.toDataURL('image/jpeg', 0.8);
+        localStorage.setItem('pixboard-autosave', data);
       } catch (e) {
-        console.error('Autosave failed', e);
+        console.warn('Autosave disabled', e);
+        clearInterval(autosaveTimer);
       }
     }
   }, 5000);
