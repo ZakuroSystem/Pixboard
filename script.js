@@ -30,8 +30,18 @@ let undoStack = [];
 let redoStack = [];
 const MAX_HISTORY = 20;
 let colorPicking = false;
-const distortWorker = new Worker('distortWorker.js');
+  const distortWorker = new Worker('distortWorker.js');
 
+function fitPreviewSize(img, max){
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  if (!w || !h) return {w:max, h:max};
+  if (w >= h){
+    return {w:max, h:Math.round(max * h / w)};
+  } else {
+    return {w:Math.round(max * w / h), h:max};
+  }
+}
 let currentLang = 'en';
 const i18n = {
   en: {
@@ -1201,9 +1211,10 @@ IO = (()=>{
     const img = new Image();
     await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=url; }).catch(()=> URL.revokeObjectURL(url));
 
-    // プレビューは高速モード：ブラウザ幅に対する 1/5（9枚以上） or 1/4（8枚以下）の正方形
+    // プレビューはブラウザ幅に応じた最大サイズで縦横比を維持
     const tileSize = Draw.computeTileRenderSize();
-    const previewData = Editor.toImageDataFromImage(img, tileSize, tileSize);
+    const {w, h} = fitPreviewSize(img, tileSize);
+    const previewData = Editor.toImageDataFromImage(img, w, h);
     const mean = Editor.imageMeanLuma(previewData);
 
     const item = {
@@ -1528,8 +1539,9 @@ Draw = (()=>{
   function redrawPreview(item){
     const params = paramsForItem(item);
     const tileSize = computeTileRenderSize();
-    if (item.previewData.width !== tileSize){
-      item.previewData = Editor.toImageDataFromImage(item.img, tileSize, tileSize);
+    const {w, h} = fitPreviewSize(item.img, tileSize);
+    if (item.previewData.width !== w || item.previewData.height !== h){
+      item.previewData = Editor.toImageDataFromImage(item.img, w, h);
       item.mean = Editor.imageMeanLuma(item.previewData);
     }
     const autoCtx = params.autoEnable ? {
@@ -1775,4 +1787,81 @@ Draw = (()=>{
     } else { App.params.autoStrength = parseFloat(autoStrength.value); Draw.refreshAll(); }
   });
   autoRecalc.addEventListener('click', ()=>{ IO.recomputeDatasetMean(); Draw.refreshAll(); });
+})();
+
+// segmented controls and selection helpers
+(function(){
+  const App = IO.App;
+  const grid = document.getElementById('grid');
+
+  // scope buttons
+  const scopeBtns = {
+    auto: document.getElementById('scopeAuto'),
+    sel: document.getElementById('scopeSel'),
+    all: document.getElementById('scopeAll'),
+    exceptSel: document.getElementById('scopeExceptSel')
+  };
+  function setScope(scope){
+    App.scope = scope;
+    Object.entries(scopeBtns).forEach(([k,btn])=>{
+      const active = k===scope;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', active);
+    });
+  }
+  Object.entries(scopeBtns).forEach(([k,btn])=> btn && btn.addEventListener('click', ()=>{ setScope(k); }));
+  setScope(App.scope);
+
+  // naming mode buttons
+  const nameBtns = {
+    simple: document.getElementById('nameSimple'),
+    detail: document.getElementById('nameDetail')
+  };
+  function setNameMode(mode){
+    App.nameMode = mode;
+    Object.entries(nameBtns).forEach(([k,btn])=>{
+      const active = k===mode;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', active);
+    });
+  }
+  Object.entries(nameBtns).forEach(([k,btn])=> btn && btn.addEventListener('click', ()=>{ setNameMode(k); }));
+  setNameMode(App.nameMode);
+
+  // tight tile toggle
+  const tightBtn = document.getElementById('tightTiles');
+  if (tightBtn){
+    tightBtn.addEventListener('click', ()=>{
+      App.tightTiles = !App.tightTiles;
+      grid.classList.toggle('tight', App.tightTiles);
+      tightBtn.classList.toggle('active', App.tightTiles);
+      tightBtn.setAttribute('aria-selected', App.tightTiles);
+      Draw.refreshLayout();
+      Draw.refreshAll();
+    });
+  }
+
+  // selection helpers
+  const selectAllBtn = document.getElementById('selectAll');
+  const clearSelBtn = document.getElementById('clearSel');
+  if (selectAllBtn){
+    selectAllBtn.addEventListener('click', ()=>{
+      for (const it of App.items){
+        it.selected = true;
+        if (it._tile) it._tile.classList.add('selected');
+        if (it._badge) it._badge.textContent = '選択中';
+      }
+      Draw.updateCounts();
+    });
+  }
+  if (clearSelBtn){
+    clearSelBtn.addEventListener('click', ()=>{
+      for (const it of App.items){
+        it.selected = false;
+        if (it._tile) it._tile.classList.remove('selected');
+        if (it._badge) it._badge.textContent = '未選択';
+      }
+      Draw.updateCounts();
+    });
+  }
 })();
