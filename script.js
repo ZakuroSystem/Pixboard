@@ -1517,14 +1517,13 @@ Draw = (()=>{
     grid.appendChild(tile);
 
     const indexOf = ()=> App.items.indexOf(item);
-    tile.addEventListener('click', (e)=>{
+    const selectHandler = (e)=>{
       const idx = indexOf();
       clickSelect(idx, e.shiftKey);
-      // 単品編集モードならクリックで右側に表示
-      if (App.mode === 'single'){
-        setCurrentIndex(idx);
-      }
-    });
+      if (App.mode === 'single') setCurrentIndex(idx);
+    };
+    tile.addEventListener('click', selectHandler);
+    canvas.addEventListener('click', selectHandler);
 
     item._tile = tile;
     item._badge = badge;

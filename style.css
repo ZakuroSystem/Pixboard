@@ -40,15 +40,17 @@ h1{margin:0; font-size:18px; letter-spacing:.02em; font-weight:800}
 
 /* ===== コントロール ===== */
 .controls{
-  display:grid; gap:10px; grid-template-columns: repeat(3, minmax(240px, 1fr));
-  background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; margin-top:10px;
+  display:grid; gap:6px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:6px; margin-top:10px;
 }
-.ctrl{background:linear-gradient(180deg,#11172a,#0f1526); border:1px solid var(--line); border-radius:6px; padding:10px}
-.ctrl label{display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin-bottom:8px; font-weight:700}
-.ctrl .row{gap:8px}
-.ctrl input[type="range"]{flex:1}
-.mini{padding:4px 8px; font-size:12px; border-radius:4px; border:1px solid var(--line); background:#0d1326; color:#dbe6ff; cursor:pointer; font-weight:800}
+.ctrl{background:linear-gradient(180deg,#11172a,#0f1526); border:1px solid var(--line); border-radius:6px; padding:6px}
+.ctrl label{display:flex; justify-content:space-between; align-items:center; gap:4px; font-size:12px; color:var(--muted); margin-bottom:4px; font-weight:700}
+.ctrl .row{gap:4px}
+.ctrl input[type="range"]{flex:1; height:4px}
+.mini{padding:2px 4px; font-size:11px; border-radius:4px; border:1px solid var(--line); background:#0d1326; color:#dbe6ff; cursor:pointer; font-weight:800}
 .mini:hover{border-color:#3a4c7d}
+
+.sidebar input[type="range"]{height:4px}
 
 @media (max-width:980px){ .controls{grid-template-columns: 1fr 1fr} }
 @media (max-width:640px){ .controls{grid-template-columns: 1fr} }
@@ -57,12 +59,12 @@ h1{margin:0; font-size:18px; letter-spacing:.02em; font-weight:800}
 .grid{
   display:grid;
   grid-template-columns: repeat(4, 1fr); /* 8枚以下デフォルトは4列 */
-  row-gap:5px;
+  row-gap:2px;
   column-gap:3px;
-  padding:5px 3px;
+  padding:2px 3px;
   background:var(--bg);
 }
-.grid.tight{row-gap:5px; column-gap:3px; padding:5px 3px}
+.grid.tight{row-gap:2px; column-gap:3px; padding:2px 3px}
 
 #pickedColor {
   display: inline-block;
@@ -79,16 +81,18 @@ h1{margin:0; font-size:18px; letter-spacing:.02em; font-weight:800}
   aspect-ratio:1/1;
   overflow:hidden;
   width:100%;
+  cursor:pointer;
 }
 .tile.selected{ outline:3px solid #7ab3ff; }
 
-.canvas{ width:100%; height:100%; display:block; object-fit:contain; }
+.canvas{ width:100%; height:100%; display:block; object-fit:cover; }
 
 .grid.cols5{ grid-template-columns: repeat(5, 1fr); }
 
 .badge{
   position:absolute; top:6px; left:6px; padding:3px 8px; border-radius:4px;
   font-size:11px; font-weight:900; background:rgba(8,12,24,.55); color:#cfe3ff; border:1px solid rgba(255,255,255,.12);
+  pointer-events:none;
 }
 
 /* ===== スプリットモード（単品編集） ===== */
