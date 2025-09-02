@@ -57,7 +57,7 @@ h1{margin:0; font-size:18px; letter-spacing:.02em; font-weight:800}
   display:grid; grid-template-columns: repeat(4, 1fr); /* 8枚以下デフォルトは4列 */
   gap:12px; padding:12px;
 }
-.grid.tight{gap:3px; padding:3px} /* 最大タイルモード：余白3px */
+.grid.tight{row-gap:5px; column-gap:3px; padding:5px 3px} /* 最大タイルモード：上下5px・左右3px余白 */
 
 #pickedColor {
   display: inline-block;

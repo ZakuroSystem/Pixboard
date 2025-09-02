@@ -1474,9 +1474,9 @@ Draw = (()=>{
   function computeTileRenderSize(){
     const vw = Math.max(320, window.innerWidth);
     const cols = columnsForCount(App.items.length || 1);
-    const gap = grid.classList.contains('tight') ? 3 : 12;
-    const padding = grid.classList.contains('tight') ? 6 : 24;
-    const w = Math.floor((vw - padding - gap*(cols-1)) / cols);
+    const gapX = grid.classList.contains('tight') ? 3 : 12;
+    const paddingX = grid.classList.contains('tight') ? 6 : 24;
+    const w = Math.floor((vw - paddingX - gapX*(cols-1)) / cols);
     return Math.max(64, w);
   }
 
