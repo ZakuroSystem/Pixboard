@@ -259,6 +259,12 @@ function addImageFromFile(file) {
   const url = URL.createObjectURL(file);
   const image = new Image();
   image.onload = () => {
+    if (!canvas.width || !canvas.height) {
+      canvas.width = image.width;
+      canvas.height = image.height;
+      document.getElementById('width').value = canvas.width;
+      document.getElementById('height').value = canvas.height;
+    }
     const scale = Math.min(canvas.width / image.width, canvas.height / image.height, 1);
     const w = image.width * scale;
     const h = image.height * scale;
