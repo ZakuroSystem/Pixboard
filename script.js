@@ -918,6 +918,10 @@ function redo() {
   loadState(data);
 }
 
+function openBatchEditor() {
+  window.open('EdiBatPlusUI/index.html', '_blank');
+}
+
 async function batchProcess() {
   if (batchFiles.length <= 1) return;
   for (const file of batchFiles) {
