@@ -40,4 +40,6 @@ pip install Flask
 python app.py
 ```
 
+On Windows, you can instead run the bundled `run_app.bat` script which installs Flask if needed and launches the server automatically.
+
 Then open `http://localhost:5000` in your browser. The **Batch Process** button toggles the built-in EdiBatPlus batch editor, and a **Back to Pixboard** button returns to the single-image editor.
