@@ -962,13 +962,19 @@ function redo() {
 }
 
 function openBatchEditor() {
+  document.getElementById('mainHeader').style.display = 'none';
   document.getElementById('singleEditor').style.display = 'none';
   document.getElementById('batchContainer').classList.remove('hidden');
+  if (typeof Draw !== 'undefined') {
+    Draw.refreshLayout();
+    Draw.refreshAll();
+  }
 }
 
 function closeBatchEditor() {
   document.getElementById('batchContainer').classList.add('hidden');
   document.getElementById('singleEditor').style.display = 'flex';
+  document.getElementById('mainHeader').style.display = '';
 }
 
 function rgbToHsl(r, g, b) {
