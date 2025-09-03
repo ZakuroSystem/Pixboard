@@ -3,30 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <title>Pixboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css">
-  <style>
-    #canvas {
-      width: 80vh;
-      height: 80vh;
-      touch-action: none;
-    }
-  </style>
-</head>
+  <link rel="stylesheet" href="tailwind.min.css">
+<link rel="stylesheet" href="style.css">
+  </head>
 <body class="h-screen flex flex-col">
-  <header class="p-2 flex justify-between items-center">
-    <h1 class="text-xl font-bold" data-i18n="title">Pixboard</h1>
-    <div class="flex items-center gap-2">
-      <input type="file" id="fileInput" accept="image/*" multiple class="border p-1">
-      <select id="langSelect" class="border p-1">
+  <header id="mainHeader" class="top">
+    <div class="row">
+      <h1 data-i18n="title">Pixboard</h1>
+      <div class="spacer"></div>
+      <input type="file" id="singleFileInput" accept="image/*" multiple>
+      <select id="langSelect">
         <option value="en">English</option>
         <option value="ja">日本語</option>
       </select>
+      <button class="btn" onclick="openBatchEditor()" data-i18n="batchBtn">Batch Process</button>
+      <button class="btn" onclick="toggleSidebars()" data-i18n="toggleUI">Toggle UI</button>
     </div>
   </header>
 
-  <main class="flex flex-1 overflow-hidden">
-    <aside class="sidebar w-44 p-2 overflow-y-auto space-y-2">
+  <main id="singleEditor" class="flex flex-1 overflow-hidden">
+    <aside id="leftSidebar" class="sidebar w-44 p-2 overflow-y-auto space-y-2">
       <div class="space-y-2">
         <button class="btn" onclick="rotate(-90)" data-i18n="rotateLeft">Rotate -90°</button>
         <button class="btn" onclick="rotate(90)" data-i18n="rotateRight">Rotate +90°</button>
@@ -44,11 +40,11 @@
       </div>
     </aside>
 
-    <section class="flex-1 flex items-center justify-center overflow-auto">
-      <canvas id="canvas" class="my-2"></canvas>
+    <section class="flex-1 flex justify-center overflow-auto items-start">
+      <canvas id="canvas"></canvas>
     </section>
 
-    <aside class="sidebar w-64 p-2 overflow-y-auto space-y-2">
+    <aside id="rightSidebar" class="sidebar w-64 p-2 overflow-y-auto space-y-2">
       <h3 class="font-semibold" data-i18n="adjustHeading">画像調整</h3>
       <div class="flex items-center gap-2">
         <label data-i18n="brightnessLabel">Brightness:</label>
@@ -87,6 +83,18 @@
         <input type="range" id="zoom" min="50" max="200" value="100" oninput="setZoom(this.value)">
       </div>
 
+      <div class="flex items-center gap-2">
+        <button class="btn" id="colorPickerBtn" data-i18n="colorPickerBtn">Color Picker</button>
+        <span data-i18n="pickedColorLabel">Color:</span>
+        <span id="pickedColor">#FFFFFF</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <label data-i18n="distortLabel">Distortion:</label>
+        <input type="range" id="distortAmount" min="-2" max="2" step="0.1" value="0">
+        <button class="btn" id="distortBtn" data-i18n="distortBtn">Apply Distortion</button>
+      </div>
+
       <h3 class="font-semibold" data-i18n="filterHeading">フィルター</h3>
       <div id="filter-buttons" class="flex flex-wrap gap-2">
         <button data-filter="none" onclick="setFilter('none')" class="btn active" data-i18n="filterNormal">Normal</button>
@@ -101,7 +109,6 @@
         <input type="number" id="textSize" value="20" class="w-16">
         <button class="btn" onclick="enableTextMode()" data-i18n="addTextBtn">Add Text</button>
         <button class="btn" onclick="enableMaskMode()" data-i18n="maskModeBtn">Mask Mode</button>
-        <button class="btn" onclick="batchProcess()" data-i18n="batchBtn">Batch Process</button>
       </div>
 
       <h3 class="font-semibold" data-i18n="stickerHeading">Stickers</h3>
@@ -118,6 +125,150 @@
     </aside>
   </main>
 
+  <section id="batchContainer" class="hidden">
+    <header class="top">
+      <div class="row">
+        <button class="btn sm" onclick="closeBatchEditor()">Back to Pixboard</button>
+        <h1>画像一括編集</h1>
+        <div class="spacer"></div>
+        <button id="openDir" class="btn sm primary">フォルダを開く（./pictures 推奨）</button>
+        <button id="openDirFallback" class="btn sm ghost">フォルダ選択（互換）</button>
+        <input id="dirInput" type="file" webkitdirectory multiple hidden />
+        <button id="addFiles" class="btn sm">個別ファイルを追加</button>
+        <input id="fileInput" type="file" accept="image/*" multiple hidden />
+        <button id="exportAll" class="btn sm success">エクスポート</button>
+        <button id="toggleControlsBtn" class="btn sm ghost" onclick="toggleBatchControls()" data-i18n="toggleControls">Controls</button>
+        <div class="spacer"></div>
+        <span class="chip" id="countChip">0 枚</span>
+        <span class="chip" id="selChip">選択 0</span>
+      </div>
+      <div class="row gap">
+        <div class="seg" role="tablist" aria-label="表示モード">
+          <button id="modeTile" class="segbtn active" role="tab" aria-selected="true">タイル一括編集</button>
+          <button id="modeSingle" class="segbtn" role="tab" aria-selected="false">一括単品編集</button>
+        </div>
+
+        <div class="seg" role="tablist" aria-label="適用対象">
+          <button id="scopeAuto" class="segbtn active" role="tab" aria-selected="true" title="選択があれば選択、なければ全体">自動</button>
+          <button id="scopeSel" class="segbtn" role="tab" aria-selected="false" title="選択のみ">選択</button>
+          <button id="scopeAll" class="segbtn" role="tab" aria-selected="false" title="全体">全体</button>
+          <button id="scopeExceptSel" class="segbtn" role="tab" aria-selected="false" title="選択以外">非選択</button>
+        </div>
+        <div class="seg" role="tablist" aria-label="ファイル名モード">
+          <button id="nameSimple" class="segbtn active" role="tab" aria-selected="true">_edited</button>
+          <button id="nameDetail" class="segbtn" role="tab" aria-selected="false">編集内容</button>
+        </div>
+        <div class="seg" role="tablist" aria-label="タイル密度">
+          <button id="tightTiles" class="segbtn active" role="tab" aria-selected="true" title="余白上下5px・左右3px・最大表示">最大タイル</button>
+        </div>
+      </div>
+
+      <div id="controls" class="controls hidden">
+        <div class="ctrl" data-key="temp" data-step="5" data-reset="0">
+          <label>色温度（寒色 ← 0 → 暖色）<span class="val" id="tempVal">0</span></label>
+          <div class="row">
+            <button class="mini minus">-1</button>
+            <input id="tempRange" type="range" min="-100" max="100" value="0" step="1" />
+            <button class="mini plus">+1</button>
+            <button class="mini reset">規定値</button>
+          </div>
+        </div>
+
+        <div class="ctrl" data-key="brightnessPct" data-step="5" data-reset="100">
+          <label>明るさ（%）<span class="val" id="brightVal">100%</span></label>
+          <div class="row">
+            <button class="mini minus">-1</button>
+            <input id="brightRange" type="range" min="0" max="200" value="100" step="1" />
+            <button class="mini plus">+1</button>
+            <button class="mini reset">規定値</button>
+          </div>
+        </div>
+
+        <div class="ctrl" data-key="ev" data-step="0.1" data-reset="0">
+          <label>露光（EV）<span class="val" id="expoVal">0.0</span></label>
+          <div class="row">
+            <button class="mini minus">-1</button>
+            <input id="expoRange" type="range" min="-4" max="4" value="0" step="0.1" />
+            <button class="mini plus">+1</button>
+            <button class="mini reset">規定値</button>
+          </div>
+        </div>
+
+        <div class="ctrl" data-key="contrastPct" data-step="5" data-reset="100">
+          <label>コントラスト（%）<span class="val" id="contVal">100%</span></label>
+          <div class="row">
+            <button class="mini minus">-1</button>
+            <input id="contRange" type="range" min="0" max="200" value="100" step="1" />
+            <button class="mini plus">+1</button>
+            <button class="mini reset">規定値</button>
+          </div>
+        </div>
+
+        <div class="ctrl" data-key="gamma" data-step="0.1" data-reset="1.0">
+          <label>ガンマ（γ）<span class="val" id="gammaVal">1.00</span></label>
+          <div class="row">
+            <button class="mini minus">-1</button>
+            <input id="gammaRange" type="range" min="0.10" max="3.00" value="1.00" step="0.01" />
+            <button class="mini plus">+1</button>
+            <button class="mini reset">規定値</button>
+          </div>
+        </div>
+
+        <div class="ctrl" data-key="saturationPct" data-step="5" data-reset="100">
+          <label>彩度（%）<span class="val" id="satVal">100%</span></label>
+          <div class="row">
+            <button class="mini minus">-1</button>
+            <input id="satRange" type="range" min="0" max="200" value="100" step="1" />
+            <button class="mini plus">+1</button>
+            <button class="mini reset">規定値</button>
+          </div>
+        </div>
+
+        <div class="ctrl auto" data-key="auto" data-step="0.05" data-reset="0">
+          <label>自動明るさ（平均±指定・強さ）<span class="val" id="autoVal">OFF</span></label>
+          <div class="row">
+            <input id="autoEnable" type="checkbox" />
+            <span class="muted">有効</span>
+            <span class="muted">Pivotオフセット</span>
+            <input id="autoPivot" type="range" min="-0.30" max="0.30" value="0" step="0.01" />
+            <span class="muted">強さ</span>
+            <input id="autoStrength" type="range" min="0" max="2" value="1" step="0.05" />
+            <button id="autoRecalc" class="mini">再計算</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row gap">
+        <div class="seg" role="tablist" aria-label="表示モード">
+          <button id="modeTile" class="segbtn active" role="tab" aria-selected="true">タイル一括編集</button>
+          <button id="modeSingle" class="segbtn" role="tab" aria-selected="false">一括単品編集</button>
+        </div>
+
+        <button id="selectAll" class="btn ghost">全選択</button>
+        <button id="clearSel" class="btn ghost">選択クリア</button>
+        <span class="muted">クリック＝トグル、Shift+Click＝範囲選択。選択は太枠で表示。</span>
+      </div>
+    </header>
+
+    <main id="grid" class="grid tight" aria-live="polite"></main>
+
+    <section id="split" class="split" aria-live="polite">
+      <div class="leftPanel">
+        <div id="thumbGrid" class="leftGrid"></div>
+      </div>
+      <div class="rightPanel">
+        <div class="detailHeader">
+          <span class="chip">単品編集中</span>
+          <span id="detailName" class="detailName"></span>
+        </div>
+        <div class="detailCanvasWrap">
+          <canvas id="detailCanvas"></canvas>
+        </div>
+      </div>
+    </section>
+
+  </section>
+
   <footer class="p-2 flex justify-center gap-2">
     <button class="btn" onclick="cropCanvas()" data-i18n="cropBtn">トリミング</button>
     <button class="btn" onclick="savePNG()" data-i18n="savePngBtn">Save PNG</button>
@@ -125,7 +276,6 @@
     <button class="btn" onclick="resetEditor()" data-i18n="resetBtn">すべてリセット</button>
   </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

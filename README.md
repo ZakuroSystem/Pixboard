@@ -16,6 +16,11 @@ Pixboard is a lightweight image editor that runs entirely in your browser. All p
 - Mask mode for layer clipping
 - Zoom in/out with mouse wheel or pinch
 - Adjust brightness
+- Advanced batch editing with integrated EdiBatPlus UI (no separate folder)
+- Color picker shows exact RGB hex values
+- Distortion tool with adjustable strength
+- Multi-threaded image processing for faster edits
+- Toggle sidebars and batch controls to maximize preview area
 
 ### Pixboard の強み
 
@@ -23,9 +28,15 @@ Pixboard is a lightweight image editor that runs entirely in your browser. All p
 - 無料でインストール不要
 - すぐに使えるシンプルなUI
 
-## Coming Soon
+## Running
 
-- Cropping tool
-- Undo / redo
+Install Flask and start a local server:
 
-Open `index.html` in a browser to start editing.
+```
+pip install Flask
+python app.py
+```
+
+On Windows, you can instead run the bundled `run_app.bat` script which installs Flask if needed and launches the server automatically.
+
+Then open `http://localhost:5000` in your browser. The **Batch Process** button toggles the built-in EdiBatPlus batch editor, and a **Back to Pixboard** button returns to the single-image editor.
