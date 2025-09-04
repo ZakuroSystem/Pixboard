@@ -520,16 +520,22 @@ function drawLayers(targetCtx) {
     }
     targetCtx.restore();
     if (i === selectedLayer) {
+      const w = layer.width;
+      const h = layer.height;
+      const cx = layer.x + w / 2;
+      const cy = layer.y + h / 2;
       targetCtx.save();
+      targetCtx.translate(cx, cy);
+      targetCtx.rotate((layer.rotation || 0) * Math.PI / 180);
       targetCtx.strokeStyle = 'blue';
       targetCtx.lineWidth = 1;
-      targetCtx.strokeRect(layer.x, layer.y, layer.width, layer.height);
+      targetCtx.strokeRect(-w / 2, -h / 2, w, h);
       const hs = HANDLE_SIZE;
       const handles = [
-        [layer.x, layer.y],
-        [layer.x + layer.width, layer.y],
-        [layer.x, layer.y + layer.height],
-        [layer.x + layer.width, layer.y + layer.height]
+        [-w / 2, -h / 2],
+        [w / 2, -h / 2],
+        [-w / 2, h / 2],
+        [w / 2, h / 2]
       ];
       targetCtx.fillStyle = 'white';
       handles.forEach(pt => {
@@ -537,14 +543,14 @@ function drawLayers(targetCtx) {
         targetCtx.strokeRect(pt[0] - hs, pt[1] - hs, hs * 2, hs * 2);
       });
       // rotation handle
-      const cx = layer.x + layer.width / 2;
-      const cy = layer.y - 20;
+      const rhx = 0;
+      const rhy = -h / 2 - 20;
       targetCtx.beginPath();
-      targetCtx.moveTo(cx, layer.y);
-      targetCtx.lineTo(cx, cy);
+      targetCtx.moveTo(0, -h / 2);
+      targetCtx.lineTo(rhx, rhy);
       targetCtx.stroke();
       targetCtx.beginPath();
-      targetCtx.arc(cx, cy, hs * 1.5, 0, Math.PI * 2);
+      targetCtx.arc(rhx, rhy, hs * 1.5, 0, Math.PI * 2);
       targetCtx.fill();
       targetCtx.stroke();
       targetCtx.restore();
@@ -859,7 +865,14 @@ function getLayerAt(x, y) {
     const layer = layers[i];
     const w = Math.abs(layer.width);
     const h = Math.abs(layer.height);
-    if (x >= layer.x && x <= layer.x + w && y >= layer.y && y <= layer.y + h) {
+    const cx = layer.x + layer.width / 2;
+    const cy = layer.y + layer.height / 2;
+    const rad = -((layer.rotation || 0) * Math.PI / 180);
+    const dx = x - cx;
+    const dy = y - cy;
+    const rx = dx * Math.cos(rad) - dy * Math.sin(rad);
+    const ry = dx * Math.sin(rad) + dy * Math.cos(rad);
+    if (rx >= -w / 2 && rx <= w / 2 && ry >= -h / 2 && ry <= h / 2) {
       return i;
     }
   }
@@ -869,23 +882,32 @@ function getLayerAt(x, y) {
 function getHandleAt(x, y) {
   if (selectedLayer === -1) return null;
   const layer = layers[selectedLayer];
+  const w = layer.width;
+  const h = layer.height;
+  const cx = layer.x + w / 2;
+  const cy = layer.y + h / 2;
+  const rad = -((layer.rotation || 0) * Math.PI / 180);
+  const dx = x - cx;
+  const dy = y - cy;
+  const rx = dx * Math.cos(rad) - dy * Math.sin(rad);
+  const ry = dx * Math.sin(rad) + dy * Math.cos(rad);
   const hs = HANDLE_SIZE;
   const handles = {
-    nw: {x: layer.x, y: layer.y},
-    ne: {x: layer.x + layer.width, y: layer.y},
-    sw: {x: layer.x, y: layer.y + layer.height},
-    se: {x: layer.x + layer.width, y: layer.y + layer.height}
+    nw: {x: -w / 2, y: -h / 2},
+    ne: {x: w / 2, y: -h / 2},
+    sw: {x: -w / 2, y: h / 2},
+    se: {x: w / 2, y: h / 2}
   };
   for (const key in handles) {
     const hx = handles[key].x;
     const hy = handles[key].y;
-    if (x >= hx - hs && x <= hx + hs && y >= hy - hs && y <= hy + hs) {
+    if (rx >= hx - hs && rx <= hx + hs && ry >= hy - hs && ry <= hy + hs) {
       return key;
     }
   }
-  const cx = layer.x + layer.width / 2;
-  const cy = layer.y - 20;
-  if (Math.hypot(x - cx, y - cy) <= hs * 1.5) {
+  const rcx = 0;
+  const rcy = -h / 2 - 20;
+  if (Math.hypot(rx - rcx, ry - rcy) <= hs * 1.5) {
     return 'rotate';
   }
   return null;
