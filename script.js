@@ -903,6 +903,7 @@ function updateLayerRotation() {
 
 function deleteLayer() {
   if (selectedLayer === -1) return;
+  saveState();
   layers.splice(selectedLayer, 1);
   selectedLayer = -1;
   updateLayerControls();
