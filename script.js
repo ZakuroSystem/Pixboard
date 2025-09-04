@@ -821,6 +821,7 @@ function addTextLayer(x, y) {
   if (!text) return;
   const color = document.getElementById('textColor').value;
   const size = parseInt(document.getElementById('textSize').value, 10) || 20;
+  ctx.font = `${size}px sans-serif`;
   const width = ctx.measureText(text).width;
   layers.push({type:'text', text, color, size, x, y, width, height:size, rotation:0, scaleX:1, scaleY:1, visible:true, mask:null});
   selectedLayer = layers.length - 1;
