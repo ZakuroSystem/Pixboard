@@ -1,4 +1,5 @@
 const canvas = document.getElementById('canvas');
+canvas.tabIndex = 0;
 const ctx = canvas.getContext('2d');
 const layers = [];
 let selectedLayer = -1;
@@ -206,22 +207,27 @@ document.getElementById('langSelect').addEventListener('change', e => {
 });
 
 window.addEventListener('keydown', e => {
-  if (selectedLayer === -1) return;
+  if (document.activeElement !== canvas || selectedLayer === -1) return;
   const step = e.shiftKey ? 10 : 1;
   switch (e.key) {
     case 'ArrowUp':
+      e.preventDefault();
       layers[selectedLayer].y -= step;
       break;
     case 'ArrowDown':
+      e.preventDefault();
       layers[selectedLayer].y += step;
       break;
     case 'ArrowLeft':
+      e.preventDefault();
       layers[selectedLayer].x -= step;
       break;
     case 'ArrowRight':
+      e.preventDefault();
       layers[selectedLayer].x += step;
       break;
     case 'Delete':
+      e.preventDefault();
       deleteLayer();
       return;
     default:
@@ -305,6 +311,7 @@ function addImageFromFile(file) {
 }
 
 canvas.addEventListener('mousedown', e => {
+  canvas.focus();
   const {x, y} = getCanvasCoords(e);
   if (isTextMode) {
     addTextLayer(x, y);
