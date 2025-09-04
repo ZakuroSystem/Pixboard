@@ -207,7 +207,18 @@ document.getElementById('langSelect').addEventListener('change', e => {
 });
 
 window.addEventListener('keydown', e => {
-  if (document.activeElement !== canvas || selectedLayer === -1) return;
+  const focused = document.activeElement === canvas;
+  if (focused && e.ctrlKey && e.key === 'z') {
+    e.preventDefault();
+    undo();
+    return;
+  }
+  if (focused && e.ctrlKey && (e.key === 'y' || (e.key === 'Z' && e.shiftKey))) {
+    e.preventDefault();
+    redo();
+    return;
+  }
+  if (!focused || selectedLayer === -1) return;
   const step = e.shiftKey ? 10 : 1;
   switch (e.key) {
     case 'ArrowUp':
