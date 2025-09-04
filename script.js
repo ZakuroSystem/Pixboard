@@ -1,4 +1,5 @@
 const canvas = document.getElementById('canvas');
+canvas.tabIndex = 0;
 const ctx = canvas.getContext('2d');
 const layers = [];
 let selectedLayer = -1;
@@ -76,8 +77,8 @@ const i18n = {
     maskModeBtn: 'Mask Mode',
     batchBtn: 'Batch Process',
     stickerHeading: 'Stickers',
-    bringForwardBtn: 'Bring Forward',
-    sendBackwardBtn: 'Send Backward',
+    bringForwardBtn: 'Move Forward',
+    sendBackwardBtn: 'Move Backward',
     deleteBtn: 'Delete',
     wLabel: 'W:',
     hLabel: 'H:',
@@ -125,8 +126,8 @@ const i18n = {
     maskModeBtn: 'マスクモード',
     batchBtn: '一括処理',
     stickerHeading: 'スタンプ',
-    bringForwardBtn: '前面へ',
-    sendBackwardBtn: '背面へ',
+    bringForwardBtn: '前に移動',
+    sendBackwardBtn: '後ろに移動',
     deleteBtn: '削除',
     wLabel: '幅:',
     hLabel: '高さ:',
@@ -206,22 +207,38 @@ document.getElementById('langSelect').addEventListener('change', e => {
 });
 
 window.addEventListener('keydown', e => {
-  if (selectedLayer === -1) return;
+  const focused = document.activeElement === canvas;
+  if (focused && e.ctrlKey && e.key === 'z') {
+    e.preventDefault();
+    undo();
+    return;
+  }
+  if (focused && e.ctrlKey && (e.key === 'y' || (e.key === 'Z' && e.shiftKey))) {
+    e.preventDefault();
+    redo();
+    return;
+  }
+  if (!focused || selectedLayer === -1) return;
   const step = e.shiftKey ? 10 : 1;
   switch (e.key) {
     case 'ArrowUp':
+      e.preventDefault();
       layers[selectedLayer].y -= step;
       break;
     case 'ArrowDown':
+      e.preventDefault();
       layers[selectedLayer].y += step;
       break;
     case 'ArrowLeft':
+      e.preventDefault();
       layers[selectedLayer].x -= step;
       break;
     case 'ArrowRight':
+      e.preventDefault();
       layers[selectedLayer].x += step;
       break;
     case 'Delete':
+      e.preventDefault();
       deleteLayer();
       return;
     default:
@@ -305,6 +322,7 @@ function addImageFromFile(file) {
 }
 
 canvas.addEventListener('mousedown', e => {
+  canvas.focus();
   const {x, y} = getCanvasCoords(e);
   if (isTextMode) {
     addTextLayer(x, y);
@@ -502,16 +520,22 @@ function drawLayers(targetCtx) {
     }
     targetCtx.restore();
     if (i === selectedLayer) {
+      const w = layer.width;
+      const h = layer.height;
+      const cx = layer.x + w / 2;
+      const cy = layer.y + h / 2;
       targetCtx.save();
+      targetCtx.translate(cx, cy);
+      targetCtx.rotate((layer.rotation || 0) * Math.PI / 180);
       targetCtx.strokeStyle = 'blue';
       targetCtx.lineWidth = 1;
-      targetCtx.strokeRect(layer.x, layer.y, layer.width, layer.height);
+      targetCtx.strokeRect(-w / 2, -h / 2, w, h);
       const hs = HANDLE_SIZE;
       const handles = [
-        [layer.x, layer.y],
-        [layer.x + layer.width, layer.y],
-        [layer.x, layer.y + layer.height],
-        [layer.x + layer.width, layer.y + layer.height]
+        [-w / 2, -h / 2],
+        [w / 2, -h / 2],
+        [-w / 2, h / 2],
+        [w / 2, h / 2]
       ];
       targetCtx.fillStyle = 'white';
       handles.forEach(pt => {
@@ -519,14 +543,14 @@ function drawLayers(targetCtx) {
         targetCtx.strokeRect(pt[0] - hs, pt[1] - hs, hs * 2, hs * 2);
       });
       // rotation handle
-      const cx = layer.x + layer.width / 2;
-      const cy = layer.y - 20;
+      const rhx = 0;
+      const rhy = -h / 2 - 20;
       targetCtx.beginPath();
-      targetCtx.moveTo(cx, layer.y);
-      targetCtx.lineTo(cx, cy);
+      targetCtx.moveTo(0, -h / 2);
+      targetCtx.lineTo(rhx, rhy);
       targetCtx.stroke();
       targetCtx.beginPath();
-      targetCtx.arc(cx, cy, hs * 1.5, 0, Math.PI * 2);
+      targetCtx.arc(rhx, rhy, hs * 1.5, 0, Math.PI * 2);
       targetCtx.fill();
       targetCtx.stroke();
       targetCtx.restore();
@@ -803,6 +827,7 @@ function addTextLayer(x, y) {
   if (!text) return;
   const color = document.getElementById('textColor').value;
   const size = parseInt(document.getElementById('textSize').value, 10) || 20;
+  ctx.font = `${size}px sans-serif`;
   const width = ctx.measureText(text).width;
   layers.push({type:'text', text, color, size, x, y, width, height:size, rotation:0, scaleX:1, scaleY:1, visible:true, mask:null});
   selectedLayer = layers.length - 1;
@@ -840,7 +865,14 @@ function getLayerAt(x, y) {
     const layer = layers[i];
     const w = Math.abs(layer.width);
     const h = Math.abs(layer.height);
-    if (x >= layer.x && x <= layer.x + w && y >= layer.y && y <= layer.y + h) {
+    const cx = layer.x + layer.width / 2;
+    const cy = layer.y + layer.height / 2;
+    const rad = -((layer.rotation || 0) * Math.PI / 180);
+    const dx = x - cx;
+    const dy = y - cy;
+    const rx = dx * Math.cos(rad) - dy * Math.sin(rad);
+    const ry = dx * Math.sin(rad) + dy * Math.cos(rad);
+    if (rx >= -w / 2 && rx <= w / 2 && ry >= -h / 2 && ry <= h / 2) {
       return i;
     }
   }
@@ -850,23 +882,32 @@ function getLayerAt(x, y) {
 function getHandleAt(x, y) {
   if (selectedLayer === -1) return null;
   const layer = layers[selectedLayer];
+  const w = layer.width;
+  const h = layer.height;
+  const cx = layer.x + w / 2;
+  const cy = layer.y + h / 2;
+  const rad = -((layer.rotation || 0) * Math.PI / 180);
+  const dx = x - cx;
+  const dy = y - cy;
+  const rx = dx * Math.cos(rad) - dy * Math.sin(rad);
+  const ry = dx * Math.sin(rad) + dy * Math.cos(rad);
   const hs = HANDLE_SIZE;
   const handles = {
-    nw: {x: layer.x, y: layer.y},
-    ne: {x: layer.x + layer.width, y: layer.y},
-    sw: {x: layer.x, y: layer.y + layer.height},
-    se: {x: layer.x + layer.width, y: layer.y + layer.height}
+    nw: {x: -w / 2, y: -h / 2},
+    ne: {x: w / 2, y: -h / 2},
+    sw: {x: -w / 2, y: h / 2},
+    se: {x: w / 2, y: h / 2}
   };
   for (const key in handles) {
     const hx = handles[key].x;
     const hy = handles[key].y;
-    if (x >= hx - hs && x <= hx + hs && y >= hy - hs && y <= hy + hs) {
+    if (rx >= hx - hs && rx <= hx + hs && ry >= hy - hs && ry <= hy + hs) {
       return key;
     }
   }
-  const cx = layer.x + layer.width / 2;
-  const cy = layer.y - 20;
-  if (Math.hypot(x - cx, y - cy) <= hs * 1.5) {
+  const rcx = 0;
+  const rcy = -h / 2 - 20;
+  if (Math.hypot(rx - rcx, ry - rcy) <= hs * 1.5) {
     return 'rotate';
   }
   return null;
@@ -903,6 +944,7 @@ function updateLayerRotation() {
 
 function deleteLayer() {
   if (selectedLayer === -1) return;
+  saveState();
   layers.splice(selectedLayer, 1);
   selectedLayer = -1;
   updateLayerControls();
@@ -911,17 +953,17 @@ function deleteLayer() {
 
 function bringForward() {
   if (selectedLayer === -1 || selectedLayer === layers.length - 1) return;
-  const layer = layers.splice(selectedLayer, 1)[0];
-  layers.push(layer);
-  selectedLayer = layers.length - 1;
+  const nextIndex = selectedLayer + 1;
+  [layers[selectedLayer], layers[nextIndex]] = [layers[nextIndex], layers[selectedLayer]];
+  selectedLayer = nextIndex;
   redraw();
 }
 
 function sendBackward() {
   if (selectedLayer <= 0) return;
-  const layer = layers.splice(selectedLayer, 1)[0];
-  layers.unshift(layer);
-  selectedLayer = 0;
+  const prevIndex = selectedLayer - 1;
+  [layers[selectedLayer], layers[prevIndex]] = [layers[prevIndex], layers[selectedLayer]];
+  selectedLayer = prevIndex;
   redraw();
 }
 
