@@ -1,5 +1,8 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+canvas.tabIndex = 0;
+canvas.addEventListener('blur', () => canvas.focus());
+canvas.focus();
 const layers = [];
 let selectedLayer = -1;
 let brightness = 0;
@@ -76,8 +79,8 @@ const i18n = {
     maskModeBtn: 'Mask Mode',
     batchBtn: 'Batch Process',
     stickerHeading: 'Stickers',
-    bringForwardBtn: 'Bring Forward',
-    sendBackwardBtn: 'Send Backward',
+    bringForwardBtn: 'Move Forward',
+    sendBackwardBtn: 'Move Backward',
     deleteBtn: 'Delete',
     wLabel: 'W:',
     hLabel: 'H:',
@@ -125,8 +128,8 @@ const i18n = {
     maskModeBtn: 'マスクモード',
     batchBtn: '一括処理',
     stickerHeading: 'スタンプ',
-    bringForwardBtn: '前面へ',
-    sendBackwardBtn: '背面へ',
+    bringForwardBtn: '前へ移動',
+    sendBackwardBtn: '後ろへ移動',
     deleteBtn: '削除',
     wLabel: '幅:',
     hLabel: '高さ:',
@@ -206,22 +209,49 @@ document.getElementById('langSelect').addEventListener('change', e => {
 });
 
 window.addEventListener('keydown', e => {
-  if (selectedLayer === -1) return;
+  canvas.focus();
+  if (e.ctrlKey) {
+    const key = e.key.toLowerCase();
+    if (key === 'z') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        redo();
+      } else {
+        undo();
+      }
+      return;
+    } else if (key === 'y') {
+      e.preventDefault();
+      redo();
+      return;
+    }
+  }
+  if (selectedLayer === -1) {
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Delete'].includes(e.key)) {
+      e.preventDefault();
+    }
+    return;
+  }
   const step = e.shiftKey ? 10 : 1;
   switch (e.key) {
     case 'ArrowUp':
+      e.preventDefault();
       layers[selectedLayer].y -= step;
       break;
     case 'ArrowDown':
+      e.preventDefault();
       layers[selectedLayer].y += step;
       break;
     case 'ArrowLeft':
+      e.preventDefault();
       layers[selectedLayer].x -= step;
       break;
     case 'ArrowRight':
+      e.preventDefault();
       layers[selectedLayer].x += step;
       break;
     case 'Delete':
+      e.preventDefault();
       deleteLayer();
       return;
     default:
@@ -803,6 +833,7 @@ function addTextLayer(x, y) {
   if (!text) return;
   const color = document.getElementById('textColor').value;
   const size = parseInt(document.getElementById('textSize').value, 10) || 20;
+  ctx.font = `${size}px sans-serif`;
   const width = ctx.measureText(text).width;
   layers.push({type:'text', text, color, size, x, y, width, height:size, rotation:0, scaleX:1, scaleY:1, visible:true, mask:null});
   selectedLayer = layers.length - 1;
@@ -840,7 +871,16 @@ function getLayerAt(x, y) {
     const layer = layers[i];
     const w = Math.abs(layer.width);
     const h = Math.abs(layer.height);
-    if (x >= layer.x && x <= layer.x + w && y >= layer.y && y <= layer.y + h) {
+    const cx = layer.x + layer.width / 2;
+    const cy = layer.y + layer.height / 2;
+    const angle = (layer.rotation || 0) * Math.PI / 180;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const dx = x - cx;
+    const dy = y - cy;
+    const rx = dx * cos + dy * sin;
+    const ry = -dx * sin + dy * cos;
+    if (rx >= -w / 2 && rx <= w / 2 && ry >= -h / 2 && ry <= h / 2) {
       return i;
     }
   }
@@ -851,11 +891,24 @@ function getHandleAt(x, y) {
   if (selectedLayer === -1) return null;
   const layer = layers[selectedLayer];
   const hs = HANDLE_SIZE;
+  const cx = layer.x + layer.width / 2;
+  const cy = layer.y + layer.height / 2;
+  const angle = (layer.rotation || 0) * Math.PI / 180;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  function rotatePoint(px, py) {
+    const dx = px - cx;
+    const dy = py - cy;
+    return {
+      x: cx + dx * cos - dy * sin,
+      y: cy + dx * sin + dy * cos
+    };
+  }
   const handles = {
-    nw: {x: layer.x, y: layer.y},
-    ne: {x: layer.x + layer.width, y: layer.y},
-    sw: {x: layer.x, y: layer.y + layer.height},
-    se: {x: layer.x + layer.width, y: layer.y + layer.height}
+    nw: rotatePoint(layer.x, layer.y),
+    ne: rotatePoint(layer.x + layer.width, layer.y),
+    sw: rotatePoint(layer.x, layer.y + layer.height),
+    se: rotatePoint(layer.x + layer.width, layer.y + layer.height)
   };
   for (const key in handles) {
     const hx = handles[key].x;
@@ -864,9 +917,9 @@ function getHandleAt(x, y) {
       return key;
     }
   }
-  const cx = layer.x + layer.width / 2;
-  const cy = layer.y - 20;
-  if (Math.hypot(x - cx, y - cy) <= hs * 1.5) {
+  const h = Math.abs(layer.height);
+  const rotateHandle = rotatePoint(cx, cy - h / 2 - 20);
+  if (Math.hypot(x - rotateHandle.x, y - rotateHandle.y) <= hs * 1.5) {
     return 'rotate';
   }
   return null;
@@ -903,25 +956,37 @@ function updateLayerRotation() {
 
 function deleteLayer() {
   if (selectedLayer === -1) return;
+  saveState();
   layers.splice(selectedLayer, 1);
   selectedLayer = -1;
   updateLayerControls();
   redraw();
+  saveState();
+  if (undoStack.length > 0) {
+    const post = undoStack.pop();
+    try {
+      redoStack.push(post);
+    } catch (e) {
+      console.error('Failed to capture redo state', e);
+    }
+  }
 }
 
 function bringForward() {
   if (selectedLayer === -1 || selectedLayer === layers.length - 1) return;
-  const layer = layers.splice(selectedLayer, 1)[0];
-  layers.push(layer);
-  selectedLayer = layers.length - 1;
+  saveState();
+  const i = selectedLayer;
+  [layers[i], layers[i + 1]] = [layers[i + 1], layers[i]];
+  selectedLayer++;
   redraw();
 }
 
 function sendBackward() {
   if (selectedLayer <= 0) return;
-  const layer = layers.splice(selectedLayer, 1)[0];
-  layers.unshift(layer);
-  selectedLayer = 0;
+  saveState();
+  const i = selectedLayer;
+  [layers[i], layers[i - 1]] = [layers[i - 1], layers[i]];
+  selectedLayer--;
   redraw();
 }
 
