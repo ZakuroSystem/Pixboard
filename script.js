@@ -77,8 +77,8 @@ const i18n = {
     maskModeBtn: 'Mask Mode',
     batchBtn: 'Batch Process',
     stickerHeading: 'Stickers',
-    bringForwardBtn: 'Bring Forward',
-    sendBackwardBtn: 'Send Backward',
+    bringForwardBtn: 'Move Forward',
+    sendBackwardBtn: 'Move Backward',
     deleteBtn: 'Delete',
     wLabel: 'W:',
     hLabel: 'H:',
@@ -126,8 +126,8 @@ const i18n = {
     maskModeBtn: 'マスクモード',
     batchBtn: '一括処理',
     stickerHeading: 'スタンプ',
-    bringForwardBtn: '前面へ',
-    sendBackwardBtn: '背面へ',
+    bringForwardBtn: '前に移動',
+    sendBackwardBtn: '後ろに移動',
     deleteBtn: '削除',
     wLabel: '幅:',
     hLabel: '高さ:',
@@ -931,17 +931,17 @@ function deleteLayer() {
 
 function bringForward() {
   if (selectedLayer === -1 || selectedLayer === layers.length - 1) return;
-  const layer = layers.splice(selectedLayer, 1)[0];
-  layers.push(layer);
-  selectedLayer = layers.length - 1;
+  const nextIndex = selectedLayer + 1;
+  [layers[selectedLayer], layers[nextIndex]] = [layers[nextIndex], layers[selectedLayer]];
+  selectedLayer = nextIndex;
   redraw();
 }
 
 function sendBackward() {
   if (selectedLayer <= 0) return;
-  const layer = layers.splice(selectedLayer, 1)[0];
-  layers.unshift(layer);
-  selectedLayer = 0;
+  const prevIndex = selectedLayer - 1;
+  [layers[selectedLayer], layers[prevIndex]] = [layers[prevIndex], layers[selectedLayer]];
+  selectedLayer = prevIndex;
   redraw();
 }
 
